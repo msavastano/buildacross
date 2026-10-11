@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Across: build crosswords</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<style>
+body{margin:0;background:#f6f3ea}
+a{color:#1c5aa6}a:hover{color:#174a88}
+@keyframes ax-stamp{0%{transform:scale(1.4);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes ax-drop{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+.ax-stamp{display:inline-block;animation:ax-stamp 180ms steps(3,end) both}
+.ax-drop{transform-origin:top;animation:ax-drop 160ms steps(2,end) both}
+@media (prefers-reduced-motion: reduce){.ax-stamp,.ax-drop{animation:none}}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 2px #f6f3ea,0 0 0 4px #1c5aa6}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f6f3ea; color: #171717; font-family: 'Libre Franklin', 'Franklin Gothic Medium', 'Helvetica Neue', Arial, sans-serif; font-size: 15px; line-height: 22px">
+
+  <header style="border-bottom: 1px solid #d9d3c3">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 16px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px">
+      <a href="#top" style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; color: #171717; text-decoration: none">Across</a>
+      <nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px 24px; flex-grow: 1">
+        <a href="#how" style="color: #171717; text-decoration: none; font-weight: 600; font-size: 14px; line-height: 44px">How it works</a>
+        <a href="#try" style="color: #171717; text-decoration: none; font-weight: 600; font-size: 14px; line-height: 44px">Try the rules</a>
+        <a href="#assistant" style="color: #171717; text-decoration: none; font-weight: 600; font-size: 14px; line-height: 44px">Assistant</a>
+      </nav>
+      <a href="Setup.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; background: #171717; color: #f6f3ea; font-weight: 600; font-size: 14px; line-height: 20px; text-decoration: none; border-radius: 2px">Start a puzzle</a>
+    </div>
+  </header>
+
+  <section id="top" style="max-width: 1200px; margin: 0 auto; padding: 64px clamp(16px, 4vw, 48px) 80px; display: flex; flex-wrap: wrap; align-items: center; gap: 48px 64px">
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+      <div style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5e5b53">Crossword construction</div>
+      <h1 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-weight: 600; font-size: clamp(40px, 5.4vw, 66px); line-height: 1.04; letter-spacing: -0.015em">Build the grid. Write the clues. Submit with confidence.</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 28px; color: #5e5b53; max-width: 520px">Across is a workbench for crossword constructors. Pick a grid size, place mirrored black squares, write every clue beside its entry, and check your puzzle against NYT submission rules as you go.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <a href="Setup.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; background: #171717; color: #f6f3ea; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 2px">Start a puzzle</a>
+        <a href="#how" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; background: #ffffff; color: #171717; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 2px; border: 1px solid #171717; box-sizing: border-box">See how it works</a>
+      </div>
+    </div>
+
+    <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 12px; align-items: stretch; max-width: 480px">
+      <div style="background: #c6def5; padding: 12px; display: flex; gap: 12px; align-items: baseline; min-height: 48px; box-sizing: border-box">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; min-width: 56px">{{hero.chip}}</span>
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 24px">{{hero.text}}</span>
+      </div>
+      <div style="container-type: inline-size; width: 100%">
+        <div role="img" aria-label="A 9 by 9 crossword grid being built: black squares placed in mirrored pairs, then answers typed in." style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 1px; background: #171717; border: 2px solid #171717">
+          <sc-for list="{{hero.cells}}" as="cell" hint-placeholder-count="81">
+            <div style="position: relative; aspect-ratio: 1; background: {{cell.bg}}; box-shadow: {{cell.ring}}; display: flex; align-items: center; justify-content: center; overflow: hidden">
+              <sc-if value="{{cell.hasNum}}" hint-placeholder-val="{{false}}">
+                <span style="position: absolute; top: 0.4cqw; left: 0.6cqw; font-size: 2.6cqw; line-height: 1; font-weight: 500">{{cell.num}}</span>
+              </sc-if>
+              <sc-if value="{{cell.hasLetter}}" hint-placeholder-val="{{false}}">
+                <span class="ax-stamp" style="font-size: 6.4cqw; line-height: 1; font-weight: 500; margin-top: 1.4cqw">{{cell.letter}}</span>
+              </sc-if>
+              <sc-if value="{{cell.block}}" hint-placeholder-val="{{false}}">
+                <div class="ax-drop" style="position: absolute; inset: 0; background: #171717"></div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <sc-for list="{{hero.checks}}" as="chk" hint-placeholder-count="4">
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid {{chk.border}}; color: {{chk.color}}; background: #ffffff; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">
+            <sc-if value="{{chk.ok}}" hint-placeholder-val="{{false}}">
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9.5 L10 2.5" fill="none" stroke="#171717" stroke-width="2"></path></svg>
+            </sc-if>
+            <sc-if value="{{chk.pending}}" hint-placeholder-val="{{true}}">
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" fill="none" stroke="#5e5b53" stroke-width="1.5"></rect></svg>
+            </sc-if>
+            {{chk.label}}
+          </span>
+        </sc-for>
+        <button type="button" onClick="{{togglePause}}" aria-pressed="{{paused}}" style="margin-left: auto; min-height: 44px; padding: 0 12px; background: transparent; border: 0; color: #1c5aa6; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">{{pauseLabel}}</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" style="border-top: 1px solid #d9d3c3; background: #ffffff">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 48px); display: flex; flex-direction: column; gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 640px">
+        <div style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5e5b53">How it works</div>
+        <h2 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 40px; line-height: 46px; font-weight: 600; letter-spacing: -0.01em">From empty squares to a puzzle an editor will read.</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; border-top: 2px solid #171717">
+        <div style="padding: 24px 24px 24px 0; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #d9d3c3">
+          <div style="font-family: 'Newsreader', Georgia, serif; font-size: 56px; line-height: 56px; font-weight: 600">1</div>
+          <h3 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 600">Choose a grid</h3>
+          <p style="margin: 0; color: #5e5b53">Start with a 5 × 5 mini, a 15 × 15 daily, a 21 × 21 Sunday, or a custom size. Begin blank or from a sample pattern.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px">
+            <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">5 × 5</span>
+            <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">15 × 15</span>
+            <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">21 × 21</span>
+            <span style="padding: 4px 8px; border: 1px solid #d9d3c3; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">CUSTOM</span>
+          </div>
+        </div>
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #d9d3c3; border-left: 1px solid #d9d3c3">
+          <div style="font-family: 'Newsreader', Georgia, serif; font-size: 56px; line-height: 56px; font-weight: 600">2</div>
+          <h3 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 600">Fill and clue</h3>
+          <p style="margin: 0; color: #5e5b53">Black squares mirror themselves. Entries number automatically, and every Across and Down answer gets its own clue field, side by side with the grid.</p>
+          <div style="background: #c6def5; padding: 8px 12px; display: flex; gap: 12px; align-items: baseline; margin-top: 4px">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">14A</span>
+            <span style="font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 24px">Speed ___</span>
+          </div>
+        </div>
+        <div style="padding: 24px 0 24px 24px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #d9d3c3; border-left: 1px solid #d9d3c3">
+          <div style="font-family: 'Newsreader', Georgia, serif; font-size: 56px; line-height: 56px; font-weight: 600">3</div>
+          <h3 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 600">Check before you submit</h3>
+          <p style="margin: 0; color: #5e5b53">Turn on NYT rules and every change is checked: symmetry, interlock, unchecked squares, 3-letter minimum, word count and repeats.</p>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px; font-size: 13px; line-height: 18px">
+            <div style="display: flex; gap: 8px; align-items: center"><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9.5 L10 2.5" fill="none" stroke="#171717" stroke-width="2"></path></svg>Rotational symmetry</div>
+            <div style="display: flex; gap: 8px; align-items: center"><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9.5 L10 2.5" fill="none" stroke="#171717" stroke-width="2"></path></svg>76 of 78 words</div>
+            <div style="display: flex; gap: 8px; align-items: center; color: #ad3307"><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" fill="none" stroke="#ad3307" stroke-width="2"></path></svg>2 entries under 3 letters</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="try" style="border-top: 1px solid #d9d3c3">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; gap: 48px 64px; align-items: flex-start">
+      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5e5b53">Try the rules</div>
+        <h2 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 40px; line-height: 46px; font-weight: 600; letter-spacing: -0.01em">Click a square. Watch its partner follow.</h2>
+        <p style="margin: 0; color: #5e5b53; max-width: 460px">Every black square you place is mirrored 180° around the center, the way NYT grids are built. Turn mirroring off to see what breaks. Squares that fail a rule get a slash.</p>
+        <div style="display: flex; flex-direction: column; border-top: 2px solid #171717; margin-top: 8px">
+          <sc-for list="{{tryRules}}" as="rule" hint-placeholder-count="5">
+            <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #d9d3c3">
+              <span style="width: 20px; height: 20px; flex: none; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px">
+                <sc-if value="{{rule.pass}}" hint-placeholder-val="{{true}}">
+                  <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Passes"><path d="M2 6.5 L5 9.5 L10 2.5" fill="none" stroke="#171717" stroke-width="2"></path></svg>
+                </sc-if>
+                <sc-if value="{{rule.fail}}" hint-placeholder-val="{{false}}">
+                  <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Fails"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" fill="none" stroke="#ad3307" stroke-width="2"></path></svg>
+                </sc-if>
+                <sc-if value="{{rule.info}}" hint-placeholder-val="{{false}}">
+                  <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Info"><rect x="2" y="2" width="8" height="8" fill="none" stroke="#5e5b53" stroke-width="1.5"></rect></svg>
+                </sc-if>
+              </span>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1">
+                <span style="font-weight: 600; font-size: 14px; line-height: 20px; color: {{rule.color}}">{{rule.label}}</span>
+                <span style="font-size: 13px; line-height: 18px; color: #5e5b53">{{rule.detail}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center">
+          <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-weight: 600; font-size: 14px; cursor: pointer">
+            <input type="checkbox" checked="{{tryMirror}}" onChange="{{toggleTryMirror}}" style="width: 18px; height: 18px; margin: 0; accent-color: #171717">
+            Mirror automatically
+          </label>
+          <button type="button" onClick="{{resetTry}}" style="min-height: 44px; padding: 0 16px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Reset grid</button>
+        </div>
+      </div>
+
+      <div style="flex: 0 1 392px; min-width: 0; width: 100%; max-width: 392px">
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: #171717; border: 2px solid #171717; container-type: inline-size">
+          <sc-for list="{{tryCells}}" as="tc" hint-placeholder-count="49">
+            <button type="button" onClick="{{tc.toggle}}" aria-label="{{tc.aria}}" aria-pressed="{{tc.block}}" style="position: relative; aspect-ratio: 1; border: 0; padding: 0; margin: 0; background: {{tc.bg}}; cursor: pointer; display: block; width: 100%">
+              <sc-if value="{{tc.hasNum}}" hint-placeholder-val="{{false}}">
+                <span style="position: absolute; top: 3px; left: 4px; font: 500 12px/1 'Libre Franklin', sans-serif; color: #171717">{{tc.num}}</span>
+              </sc-if>
+              <sc-if value="{{tc.flag}}" hint-placeholder-val="{{false}}">
+                <svg viewBox="0 0 10 10" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%"><path d="M1.5 8.5 L8.5 1.5" stroke="#ad3307" stroke-width="0.7" fill="none"></path></svg>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <div style="margin-top: 8px; font-size: 13px; line-height: 18px; color: #5e5b53">7 × 7 practice grid · {{tryWordCount}} words · {{tryBlockCount}} black squares</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="assistant" style="border-top: 1px solid #d9d3c3; background: #ffffff">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; gap: 48px 64px; align-items: flex-start">
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5e5b53">Assistant</div>
+        <h2 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 40px; line-height: 46px; font-weight: 600; letter-spacing: -0.01em">Help when you ask for it. Quiet when you don't.</h2>
+        <p style="margin: 0; color: #5e5b53; max-width: 480px">The assistant sits in a side panel and knows your grid, your crossings and which checks are failing. It suggests; you decide what goes in.</p>
+        <div style="display: flex; flex-direction: column; border-top: 2px solid #171717; margin-top: 8px">
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #d9d3c3">
+            <span style="font-size: 12px; line-height: 20px; font-weight: 700; letter-spacing: 0.1em; min-width: 64px">FILL</span>
+            <span>Finds words that fit your crossings, like C?U?E.</span>
+          </div>
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #d9d3c3">
+            <span style="font-size: 12px; line-height: 20px; font-weight: 700; letter-spacing: 0.1em; min-width: 64px">CLUES</span>
+            <span>Drafts clues in house style, from Monday-easy to Saturday-tricky.</span>
+          </div>
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #d9d3c3">
+            <span style="font-size: 12px; line-height: 20px; font-weight: 700; letter-spacing: 0.1em; min-width: 64px">RULES</span>
+            <span>Explains why a check fails and which squares to move.</span>
+          </div>
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #d9d3c3">
+            <span style="font-size: 12px; line-height: 20px; font-weight: 700; letter-spacing: 0.1em; min-width: 64px">STYLE</span>
+            <span>Flags clues that repeat their answer or break house style.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 400px; min-width: 0; max-width: 520px; border: 1px solid #d9d3c3; background: #f6f3ea">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #d9d3c3; background: #ffffff">
+          <span style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 600">Assistant</span>
+          <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">23A · C?U?E</span>
+        </div>
+        <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px">
+          <div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; gap: 4px; align-items: flex-end">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">YOU</span>
+            <div style="background: #ffffff; border: 1px solid #d9d3c3; padding: 10px 12px">What fits 23 Across?</div>
+          </div>
+          <div style="max-width: 90%; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">ASSISTANT</span>
+            <div style="background: #ffffff; border: 1px solid #d9d3c3; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px">
+              <span>Four fit your crossings. CHUTE reads freshest; CRUSE is crosswordese.</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">CHUTE</span>
+                <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">CAUSE</span>
+                <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">CRUDE</span>
+                <span style="padding: 4px 8px; border: 1px solid #171717; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em">CRUSE</span>
+              </div>
+            </div>
+          </div>
+          <div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; gap: 4px; align-items: flex-end">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">YOU</span>
+            <div style="background: #ffffff; border: 1px solid #d9d3c3; padding: 10px 12px">Clue CHUTE for a Tuesday.</div>
+          </div>
+          <div style="max-width: 90%; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">ASSISTANT</span>
+            <div style="background: #ffffff; border: 1px solid #d9d3c3; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 24px">
+              <span>Laundry ___</span>
+              <span>Parachute, informally</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="border-top: 2px solid #171717">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; gap: 24px 48px; align-items: center; justify-content: space-between">
+      <h2 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.01em; max-width: 640px">Your next puzzle starts with one empty square.</h2>
+      <a href="Setup.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; background: #171717; color: #f6f3ea; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 2px">Start a puzzle</a>
+    </div>
+  </section>
+
+  <footer style="border-top: 1px solid #d9d3c3">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; font-size: 13px; line-height: 18px; color: #5e5b53">
+      <span style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 600; color: #171717">Across</span>
+      <span>© 2026 [YOUR COMPANY]. Not affiliated with The New York Times.</span>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2900}}'>
+var HERO_N = 9;
+var HERO_PAIRS = [[[0, 4], [8, 4]], [[1, 4], [7, 4]], [[3, 0], [5, 8]]];
+var HERO_WORDS = [
+  { r: 0, c: 0, w: 'GRID', clue: 'Crossword framework' },
+  { r: 0, c: 5, w: 'CLUE', clue: 'Hint at the end of a line?' },
+  { r: 2, c: 0, w: 'SYMMETRIC', clue: 'Like a grid that looks the same upside down' },
+  { r: 4, c: 0, w: 'CROSSWORD', clue: 'Puzzle with Across and Down' },
+  { r: 6, c: 0, w: 'INTERLOCK', clue: 'Connect, as every corner of a good grid' },
+  { r: 8, c: 0, w: 'INKS', clue: 'Signs, as a contract' },
+  { r: 8, c: 5, w: 'DONE', clue: 'Finished' }
+];
+var HERO_BLOCKS_DONE = 15;
+var HERO_PLAN = (function () {
+  var t = 17, out = [];
+  HERO_WORDS.forEach(function (w) {
+    out.push({ w: w, start: t, typeStart: t + 3, end: t + 3 + w.w.length });
+    t = t + 3 + w.w.length + 1;
+  });
+  return { words: out, fillEnd: t };
+})();
+var HERO_CHECK_AT = [2, 5, 8, 11].map(function (d) { return HERO_PLAN.fillEnd + d; });
+var HERO_READY = HERO_PLAN.fillEnd + 13;
+var HERO_LOOP = HERO_PLAN.fillEnd + 46;
+
+function analyze(g, R, C) {
+  var B = function (r, c) { return g[r * C + c] === '#'; };
+  var num = [], across = [], down = [], n = 0, i, r, c, k;
+  for (i = 0; i < R * C; i++) num.push(0);
+  for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+    if (B(r, c)) continue;
+    var sa = (c === 0 || B(r, c - 1)) && c + 1 < C && !B(r, c + 1);
+    var sd = (r === 0 || B(r - 1, c)) && r + 1 < R && !B(r + 1, c);
+    if (sa || sd) { n++; num[r * C + c] = n; }
+    if (sa) { var ca = []; for (k = c; k < C && !B(r, k); k++) ca.push(r * C + k); across.push({ key: r + '-' + c + '-A', num: n, dir: 'A', cells: ca }); }
+    if (sd) { var cd = []; for (k = r; k < R && !B(k, c); k++) cd.push(k * C + c); down.push({ key: r + '-' + c + '-D', num: n, dir: 'D', cells: cd }); }
+  }
+  var asym = [], unchecked = [], blocks = 0, open = [];
+  for (i = 0; i < R * C; i++) {
+    var rr = Math.floor(i / C), cc = i % C;
+    if (g[i] === '#') { blocks++; if (g[R * C - 1 - i] !== '#') asym.push(i); continue; }
+    open.push(i);
+    var h = (cc > 0 && !B(rr, cc - 1)) || (cc < C - 1 && !B(rr, cc + 1));
+    var v = (rr > 0 && !B(rr - 1, cc)) || (rr < R - 1 && !B(rr + 1, cc));
+    if (!h || !v) unchecked.push(i);
+  }
+  var short = [], shortCount = 0;
+  across.concat(down).forEach(function (w) { if (w.cells.length < 3) { shortCount++; short = short.concat(w.cells); } });
+  var comp = {}, comps = [];
+  open.forEach(function (s) {
+    if (comp[s] !== undefined) return;
+    var id = comps.length, members = [s], q = [s]; comp[s] = id;
+    while (q.length) {
+      var x = q.pop(), xr = Math.floor(x / C), xc = x % C;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        var nr = xr + d[0], nc = xc + d[1];
+        if (nr < 0 || nc < 0 || nr >= R || nc >= C) return;
+        var y = nr * C + nc;
+        if (g[y] === '#' || comp[y] !== undefined) return;
+        comp[y] = id; members.push(y); q.push(y);
+      });
+    }
+    comps.push(members);
+  });
+  var cut = [];
+  if (comps.length > 1) {
+    var big = 0; comps.forEach(function (m, j) { if (m.length > comps[big].length) big = j; });
+    comps.forEach(function (m, j) { if (j !== big) cut = cut.concat(m); });
+  }
+  return { num: num, across: across, down: down, asym: asym, unchecked: unchecked, short: short, shortCount: shortCount, cut: cut, blocks: blocks, open: open.length, words: across.length + down.length };
+}
+
+function tryStart() {
+  var g = []; for (var i = 0; i < 49; i++) g.push('');
+  g[0] = '#'; g[24] = '#'; g[48] = '#';
+  return g;
+}
+
+class Component extends DCLogic {
+  componentDidMount() {
+    var reduce = false;
+    try { reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+    var self = this;
+    if (reduce) {
+      this.setState({ paused: true, t: HERO_READY });
+      return;
+    }
+    this.timer = setInterval(function () {
+      var s = self.state || {};
+      if (s.paused) return;
+      self.setState({ t: ((s.t || 0) + 1) % HERO_LOOP });
+    }, 140);
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+
+  heroModel(t) {
+    var N = HERO_N, cells = [], i;
+    var g = []; for (i = 0; i < N * N; i++) g.push('');
+    HERO_PAIRS.forEach(function (p, j) {
+      if (t >= 2 + j * 4) g[p[0][0] * N + p[0][1]] = '#';
+      if (t >= 3 + j * 4) g[p[1][0] * N + p[1][1]] = '#';
+    });
+    var full = []; for (i = 0; i < N * N; i++) full.push('');
+    HERO_PAIRS.forEach(function (p) { full[p[0][0] * N + p[0][1]] = '#'; full[p[1][0] * N + p[1][1]] = '#'; });
+    var model = analyze(full, N, N);
+    var letters = {}, active = null, cursor = -1, activeCells = {};
+    HERO_PLAN.words.forEach(function (p) {
+      var len = p.w.w.length, kTyped = 0;
+      if (t >= p.end) kTyped = len;
+      else if (t >= p.typeStart) kTyped = Math.min(len, t - p.typeStart + 1);
+      for (var j = 0; j < kTyped; j++) letters[p.w.r * N + p.w.c + j] = p.w.w[j];
+      if (t >= p.start && t <= p.end) {
+        active = p;
+        for (var m = 0; m < len; m++) activeCells[p.w.r * N + p.w.c + m] = true;
+        cursor = p.w.r * N + p.w.c + (t < p.typeStart ? 0 : Math.min(kTyped, len - 1));
+      }
+    });
+    for (i = 0; i < N * N; i++) {
+      var isCur = i === cursor, inWord = !!activeCells[i];
+      cells.push({
+        block: g[i] === '#',
+        hasNum: t >= HERO_BLOCKS_DONE && model.num[i] > 0,
+        num: model.num[i],
+        hasLetter: !!letters[i],
+        letter: letters[i] || '',
+        bg: isCur ? '#ffd43b' : (inWord ? '#c6def5' : '#ffffff'),
+        ring: isCur ? 'inset 0 0 0 2px #171717' : 'none'
+      });
+    }
+    var chip, text;
+    if (t < HERO_BLOCKS_DONE) { chip = 'Blocks'; text = 'Each black square gets a partner, rotated 180°.'; }
+    else if (active) {
+      var startIdx = active.w.r * N + active.w.c;
+      chip = model.num[startIdx] + 'A'; text = active.w.clue;
+    } else if (t < HERO_PLAN.fillEnd) { chip = 'Fill'; text = 'Typing answers into the grid.'; }
+    else if (t < HERO_READY) { chip = 'Checks'; text = 'Running NYT submission checks.'; }
+    else { chip = 'Ready'; text = 'Every check passes. Ready to submit.'; }
+    var labels = ['Symmetry', 'Interlock', '3+ letters', 'All checked'];
+    var checks = labels.map(function (l, j) {
+      var ok = t >= HERO_CHECK_AT[j];
+      return { label: l, ok: ok, pending: !ok, border: ok ? '#171717' : '#d9d3c3', color: ok ? '#171717' : '#5e5b53' };
+    });
+    return { cells: cells, chip: chip, text: text, checks: checks };
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var t = s.t || 0;
+    var hero = this.heroModel(t);
+
+    var tg = s.tg || tryStart();
+    var mirror = s.tryMirror === undefined ? true : s.tryMirror;
+    var m = analyze(tg, 7, 7);
+    var flagged = {};
+    m.asym.concat(m.unchecked, m.short, m.cut).forEach(function (i) { flagged[i] = true; });
+    var tryCells = tg.map(function (v, i) {
+      var r = Math.floor(i / 7), c = i % 7, isBlock = v === '#';
+      return {
+        block: isBlock,
+        bg: isBlock ? '#171717' : '#ffffff',
+        hasNum: !isBlock && m.num[i] > 0,
+        num: m.num[i],
+        flag: !!flagged[i],
+        aria: 'Row ' + (r + 1) + ', column ' + (c + 1) + (isBlock ? ', black square' : ', white square'),
+        toggle: function () {
+          var cur = (self.state && self.state.tg) || tryStart();
+          var g = cur.slice();
+          var nv = g[i] === '#' ? '' : '#';
+          g[i] = nv;
+          var mir = (self.state && self.state.tryMirror !== undefined) ? self.state.tryMirror : true;
+          if (mir) g[48 - i] = nv;
+          self.setState({ tg: g });
+        }
+      };
+    });
+    function rule(label, ok, okText, badText, info) {
+      return {
+        label: label, pass: !info && ok, fail: !info && !ok, info: !!info,
+        color: (!info && !ok) ? '#ad3307' : '#171717',
+        detail: ok ? okText : badText
+      };
+    }
+    var tryRules = [
+      rule('Rotational symmetry', m.asym.length === 0, 'Turn it 180° and the pattern matches.', m.asym.length + ' black ' + (m.asym.length === 1 ? 'square has' : 'squares have') + ' no partner.'),
+      rule('All-over interlock', m.cut.length === 0, 'Every white square connects to the rest.', m.cut.length + ' squares are walled off.'),
+      rule('Every answer 3+ letters', m.shortCount === 0, 'No 2-letter entries.', m.shortCount + (m.shortCount === 1 ? ' entry is' : ' entries are') + ' too short.'),
+      rule('No unchecked squares', m.unchecked.length === 0, 'Every letter belongs to an Across and a Down.', m.unchecked.length + (m.unchecked.length === 1 ? ' square belongs' : ' squares belong') + ' to only one word.'),
+      rule('Word count', true, m.words + ' words in this grid.', '', true)
+    ];
+
+    return {
+      hero: hero,
+      paused: !!s.paused,
+      pauseLabel: s.paused ? 'Play animation' : 'Pause animation',
+      togglePause: function () { self.setState({ paused: !(self.state && self.state.paused) }); },
+      tryCells: tryCells,
+      tryRules: tryRules,
+      tryMirror: mirror,
+      tryWordCount: m.words,
+      tryBlockCount: m.blocks,
+      toggleTryMirror: function () { var cur = self.state && self.state.tryMirror !== undefined ? self.state.tryMirror : true; self.setState({ tryMirror: !cur }); },
+      resetTry: function () { self.setState({ tg: tryStart(), tryMirror: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

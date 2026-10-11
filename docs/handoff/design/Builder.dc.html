@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Across builder</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f6f3ea; color: #171717; font-family: 'Libre Franklin', 'Franklin Gothic Medium', 'Helvetica Neue', Arial, sans-serif; font-size: 15px; line-height: 22px">
+
+  <header style="border-bottom: 1px solid #d9d3c3; background: #f6f3ea">
+    <div style="padding: 12px clamp(16px, 2.5vw, 32px); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px">
+      <a href="Main.dc.html" style="font-family: 'Newsreader', Georgia, serif; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; color: #171717; text-decoration: none">Across</a>
+      <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 200px; padding-left: 24px; border-left: 1px solid #d9d3c3">
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 600">{{titleShown}}</span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5e5b53">{{metaLine}}</span>
+      </div>
+      <sc-if value="{{isEditor}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" onClick="{{openSetup}}" style="min-height: 44px; padding: 0 16px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Puzzle settings</button>
+          <button type="button" onClick="{{toggleAi}}" aria-pressed="{{aiOpen}}" style="min-height: 44px; padding: 0 16px; background: {{aiBtnBg}}; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Assistant</button>
+          <button type="button" style="min-height: 44px; padding: 0 16px; background: #171717; color: #f6f3ea; border: 1px solid #171717; border-radius: 2px; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Export puzzle</button>
+        </div>
+      </sc-if>
+    </div>
+  </header>
+
+  <sc-if value="{{isSetup}}" hint-placeholder-val="{{false}}">
+    <main style="max-width: 920px; margin: 0 auto; padding: 48px clamp(16px, 4vw, 48px) 64px; display: flex; flex-direction: column; gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.01em">New puzzle</h1>
+        <p style="margin: 0; color: #5e5b53">Set the size and rules. You can change the title and clues later.</p>
+      </div>
+
+      <section style="display: flex; flex-direction: column; gap: 16px; border-top: 2px solid #171717; padding-top: 20px">
+        <h2 style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Details</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px">
+          <label style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">
+            Title
+            <input type="text" value="{{title}}" onChange="{{setTitle}}" style="min-height: 44px; padding: 0 12px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 17px/24px 'Newsreader', Georgia, serif; color: #171717; box-sizing: border-box">
+          </label>
+          <label style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">
+            Constructor
+            <input type="text" value="{{author}}" onChange="{{setAuthor}}" placeholder="Your name" style="min-height: 44px; padding: 0 12px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 15px/22px 'Libre Franklin', sans-serif; color: #171717; box-sizing: border-box">
+          </label>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px; border-top: 2px solid #171717; padding-top: 20px">
+        <h2 style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Grid size</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+          <sc-for list="{{sizes}}" as="sz" hint-placeholder-count="4">
+            <label style="display: flex; flex-direction: column; gap: 4px; padding: 16px; background: #ffffff; border: 1px solid #d9d3c3; box-shadow: {{sz.ring}}; cursor: pointer; min-height: 132px; box-sizing: border-box">
+              <input type="radio" name="grid-size" checked="{{sz.checked}}" onChange="{{sz.pick}}" style="margin: 0 0 8px; width: 18px; height: 18px; accent-color: #171717">
+              <span style="font-family: 'Newsreader', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 600">{{sz.dims}}</span>
+              <span style="font-size: 14px; line-height: 20px; font-weight: 600">{{sz.label}}</span>
+              <span style="font-size: 13px; line-height: 18px; color: #5e5b53">{{sz.note}}</span>
+            </label>
+          </sc-for>
+        </div>
+        <sc-if value="{{isCustom}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">
+              Rows
+              <input type="number" min="3" max="25" value="{{customR}}" onChange="{{setCustomR}}" style="width: 120px; min-height: 44px; padding: 0 12px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 15px/22px 'Libre Franklin', sans-serif; box-sizing: border-box">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">
+              Columns
+              <input type="number" min="3" max="25" value="{{customC}}" onChange="{{setCustomC}}" style="width: 120px; min-height: 44px; padding: 0 12px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 15px/22px 'Libre Franklin', sans-serif; box-sizing: border-box">
+            </label>
+            <span style="font-size: 13px; line-height: 44px; color: #5e5b53">3 to 25 squares each way.</span>
+          </div>
+        </sc-if>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px; border-top: 2px solid #171717; padding-top: 20px">
+        <h2 style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Submission rules</h2>
+        <label style="display: flex; gap: 16px; align-items: flex-start; padding: 16px; background: #ffffff; border: 1px solid #d9d3c3; box-shadow: {{nytRing}}; cursor: pointer">
+          <input type="checkbox" checked="{{nyt}}" onChange="{{toggleNyt}}" style="margin: 2px 0 0; width: 20px; height: 20px; flex: none; accent-color: #171717">
+          <span style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-weight: 600; font-size: 15px">Follow NYT submission guidelines</span>
+            <span style="font-size: 14px; line-height: 20px; color: #5e5b53">Checks rotational symmetry, all-over interlock, unchecked squares, 3-letter minimum, word count, black-square density and repeated answers as you build. Black squares always mirror.</span>
+          </span>
+        </label>
+        <sc-if value="{{showSizeWarning}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border: 1px solid #ad3307; background: #ffffff; color: #171717">
+            <svg width="18" height="18" viewBox="0 0 12 12" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M6 1.2 L11 10.5 L1 10.5 Z" fill="none" stroke="#ad3307" stroke-width="1.3"></path><path d="M6 4.5 L6 7.4 M6 8.6 L6 9.4" stroke="#ad3307" stroke-width="1.3"></path></svg>
+            <span style="font-size: 14px; line-height: 20px">NYT takes 15 × 15 dailies and 21 × 21 Sundays. You can still build this grid; the size check will fail.</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{showPtype}}" hint-placeholder-val="{{true}}">
+          <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+            <legend style="font-weight: 600; font-size: 14px; padding: 0; margin-bottom: 8px">Puzzle type</legend>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px 24px">
+              <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; cursor: pointer">
+                <input type="radio" name="ptype" checked="{{ptypeThemed}}" onChange="{{pickThemed}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+                Themed, Monday to Thursday · 78 words max
+              </label>
+              <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; cursor: pointer">
+                <input type="radio" name="ptype" checked="{{ptypeThemeless}}" onChange="{{pickThemeless}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+                Themeless, Friday or Saturday · 72 words max
+              </label>
+            </div>
+          </fieldset>
+        </sc-if>
+        <sc-if value="{{showSundayNote}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 0; font-size: 14px; color: #5e5b53">Sunday puzzle: 140 words max.</p>
+        </sc-if>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 12px; border-top: 2px solid #171717; padding-top: 20px">
+        <h2 style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Starting grid</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 24px">
+          <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; cursor: pointer; color: {{sampleColor}}">
+            <input type="radio" name="start" checked="{{startSample}}" disabled="{{sampleDisabled}}" onChange="{{pickSample}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+            Sample pattern, partly filled
+          </label>
+          <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; cursor: pointer">
+            <input type="radio" name="start" checked="{{startBlank}}" onChange="{{pickBlank}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+            Blank grid
+          </label>
+        </div>
+        <sc-if value="{{sampleDisabled}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 0; font-size: 13px; color: #5e5b53">Sample patterns come in 5 × 5 and 15 × 15.</p>
+        </sc-if>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; border-top: 1px solid #d9d3c3; padding-top: 24px">
+        <button type="button" onClick="{{create}}" style="min-height: 48px; padding: 0 24px; background: #171717; color: #f6f3ea; border: 1px solid #171717; border-radius: 2px; font: 600 15px/20px 'Libre Franklin', sans-serif; cursor: pointer">Create puzzle</button>
+        <sc-if value="{{fromEditor}}" hint-placeholder-val="{{false}}">
+          <button type="button" onClick="{{backToGrid}}" style="min-height: 48px; padding: 0 24px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 15px/20px 'Libre Franklin', sans-serif; cursor: pointer">Back to the grid</button>
+        </sc-if>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{isEditor}}" hint-placeholder-val="{{true}}">
+    <main style="padding: 24px clamp(16px, 2.5vw, 32px) 48px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+      <section aria-label="Grid" style="flex: 0 1 auto; min-width: 0; max-width: 100%; width: {{gridW}}px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center">
+          <div role="group" aria-label="Edit mode" style="display: inline-flex; border: 1px solid #171717; border-radius: 2px">
+            <button type="button" onClick="{{modeLetters}}" aria-pressed="{{isLetters}}" style="min-height: 42px; padding: 0 14px; border: 0; border-radius: 0; background: {{lettersBg}}; color: {{lettersFg}}; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Letters</button>
+            <button type="button" onClick="{{modeBlocks}}" aria-pressed="{{isBlocks}}" style="min-height: 42px; padding: 0 14px; border: 0; border-left: 1px solid #171717; border-radius: 0; background: {{blocksBg}}; color: {{blocksFg}}; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Black squares</button>
+          </div>
+          <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; cursor: pointer; color: {{mirrorColor}}">
+            <input type="checkbox" checked="{{mirrorOn}}" disabled="{{nyt}}" onChange="{{toggleMirror}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+            Mirror black squares
+          </label>
+          <button type="button" onClick="{{clearLetters}}" style="margin-left: auto; min-height: 44px; padding: 0 4px; background: transparent; border: 0; color: #1c5aa6; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Clear letters</button>
+        </div>
+
+        <div style="background: #c6def5; padding: 6px 4px; display: flex; gap: 8px; align-items: center; min-height: 56px; box-sizing: border-box">
+          <button type="button" onClick="{{prevClue}}" aria-label="Previous clue" style="width: 44px; height: 44px; flex: none; border: 0; background: transparent; font: 400 26px/1 'Newsreader', Georgia, serif; color: #171717; cursor: pointer">‹</button>
+          <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; min-width: 40px">{{activeChip}}</span>
+          <span style="flex-grow: 1; font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 24px; color: {{activeClueColor}}; font-style: {{activeClueStyle}}">{{activeClueText}}</span>
+          <button type="button" onClick="{{nextClue}}" aria-label="Next clue" style="width: 44px; height: 44px; flex: none; border: 0; background: transparent; font: 400 26px/1 'Newsreader', Georgia, serif; color: #171717; cursor: pointer">›</button>
+        </div>
+
+        <div style="overflow-x: auto; max-width: 100%">
+          <div ref="{{gridRef}}" tabIndex="0" onKeyDown="{{onKey}}" onFocus="{{gridFocus}}" onBlur="{{gridBlur}}" aria-label="{{gridAria}}" style="display: grid; grid-template-columns: {{gridCols}}; gap: 1px; background: #171717; border: 2px solid #171717; width: max-content; outline: none; box-shadow: {{gridRing}}; margin: 4px">
+            <sc-for list="{{cells}}" as="cell" hint-placeholder-count="225">
+              <button type="button" tabIndex="-1" onClick="{{cell.click}}" aria-label="{{cell.aria}}" style="position: relative; width: {{cell.size}}px; height: {{cell.size}}px; padding: 0; margin: 0; border: 0; border-radius: 0; background: {{cell.bg}}; box-shadow: {{cell.ring}}; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Libre Franklin', sans-serif; color: #171717">
+                <sc-if value="{{cell.hasNum}}" hint-placeholder-val="{{false}}">
+                  <span style="position: absolute; top: 2px; left: 3px; font-size: {{cell.numFs}}px; line-height: 1; font-weight: 500; color: #171717">{{cell.num}}</span>
+                </sc-if>
+                <span style="font-size: {{cell.letFs}}px; line-height: 1; font-weight: 500; margin-top: {{cell.letMt}}px">{{cell.letter}}</span>
+                <sc-if value="{{cell.flag}}" hint-placeholder-val="{{false}}">
+                  <svg viewBox="0 0 10 10" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%"><path d="M1.2 8.8 L8.8 1.2" stroke="#ad3307" stroke-width="0.7" fill="none"></path></svg>
+                </sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 13px; line-height: 18px; color: #5e5b53">{{helpText}}</p>
+      </section>
+
+      <section aria-label="Checks and clues" style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #ffffff; border: 1px solid #d9d3c3">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #d9d3c3">
+            <div style="display: flex; flex-direction: column">
+              <span style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 600">{{checksTitle}}</span>
+              <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: {{summaryColor}}">{{checksSummary}}</span>
+            </div>
+            <label style="display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; cursor: pointer">
+              <input type="checkbox" checked="{{nyt}}" onChange="{{toggleNyt}}" style="margin: 0; width: 18px; height: 18px; accent-color: #171717">
+              NYT rules
+            </label>
+          </div>
+          <sc-if value="{{showPtypeSelect}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 12px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #d9d3c3">
+              <label for="ptype-select" style="font-size: 13px; font-weight: 600">Puzzle type</label>
+              <select id="ptype-select" value="{{ptype}}" onChange="{{setPtype}}" style="min-height: 36px; padding: 0 8px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 14px/20px 'Libre Franklin', sans-serif; color: #171717">
+                <option value="themed">Themed · 78 words</option>
+                <option value="themeless">Themeless · 72 words</option>
+              </select>
+            </div>
+          </sc-if>
+          <div>
+            <sc-for list="{{checks}}" as="ck" hint-placeholder-count="10">
+              <div style="display: flex; gap: 10px; align-items: center; padding: 6px 16px; min-height: 36px; border-bottom: 1px solid #ece7da; background: {{ck.bg}}">
+                <span style="width: 16px; height: 16px; flex: none; display: inline-flex">
+                  <sc-if value="{{ck.isPass}}" hint-placeholder-val="{{true}}">
+                    <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Passes"><path d="M2 6.5 L5 9.5 L10 2.5" fill="none" stroke="#171717" stroke-width="2"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ck.isFail}}" hint-placeholder-val="{{false}}">
+                    <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Fails"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" fill="none" stroke="#ad3307" stroke-width="2"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ck.isWarn}}" hint-placeholder-val="{{false}}">
+                    <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="Warning"><path d="M6 1.2 L11 10.5 L1 10.5 Z" fill="none" stroke="#ad3307" stroke-width="1.3"></path><path d="M6 4.5 L6 7.4 M6 8.6 L6 9.4" stroke="#ad3307" stroke-width="1.3"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ck.isTodo}}" hint-placeholder-val="{{false}}">
+                    <svg width="16" height="16" viewBox="0 0 12 12" role="img" aria-label="In progress"><rect x="2" y="2" width="8" height="8" fill="none" stroke="#5e5b53" stroke-width="1.5"></rect></svg>
+                  </sc-if>
+                </span>
+                <span style="flex-grow: 1; min-width: 0; display: flex; flex-wrap: wrap; column-gap: 8px; align-items: baseline">
+                  <span style="font-size: 14px; line-height: 20px; font-weight: 600; color: {{ck.color}}">{{ck.label}}</span>
+                  <span style="font-size: 13px; line-height: 18px; color: #5e5b53">{{ck.detail}}</span>
+                </span>
+                <sc-if value="{{ck.canShow}}" hint-placeholder-val="{{false}}">
+                  <button type="button" onClick="{{ck.show}}" aria-pressed="{{ck.showing}}" style="min-height: 32px; padding: 0 10px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 12px/16px 'Libre Franklin', sans-serif; cursor: pointer; flex: none">{{ck.showLabel}}</button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d9d3c3">
+          <div role="group" aria-label="Clue lists" style="display: flex; border-bottom: 2px solid #171717">
+            <button type="button" onClick="{{tabAcross}}" aria-pressed="{{isTabA}}" style="flex: 1 1 0; min-height: 44px; border: 0; border-radius: 0; background: {{tabABg}}; color: {{tabAFg}}; font: 700 12px/16px 'Libre Franklin', sans-serif; letter-spacing: 0.1em; cursor: pointer">ACROSS · {{acrossCount}}</button>
+            <button type="button" onClick="{{tabDown}}" aria-pressed="{{isTabD}}" style="flex: 1 1 0; min-height: 44px; border: 0; border-left: 1px solid #171717; border-radius: 0; background: {{tabDBg}}; color: {{tabDFg}}; font: 700 12px/16px 'Libre Franklin', sans-serif; letter-spacing: 0.1em; cursor: pointer">DOWN · {{downCount}}</button>
+          </div>
+          <div style="max-height: 520px; overflow-y: auto">
+            <sc-for list="{{clueRows}}" as="cr" hint-placeholder-count="8">
+              <div style="padding: 10px 16px; background: {{cr.bg}}; border-bottom: 1px solid #ece7da; display: flex; flex-direction: column; gap: 6px">
+                <button type="button" onClick="{{cr.select}}" aria-label="{{cr.selectAria}}" style="display: flex; gap: 10px; align-items: baseline; width: 100%; padding: 0; margin: 0; border: 0; background: transparent; text-align: left; cursor: pointer; color: #171717; font-family: 'Libre Franklin', sans-serif">
+                  <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.05em; min-width: 26px">{{cr.num}}</span>
+                  <span style="font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: 0.14em; color: #5e5b53">{{cr.pattern}}</span>
+                  <span style="margin-left: auto; font-size: 12px; line-height: 16px; color: #5e5b53; font-variant-numeric: tabular-nums">{{cr.len}}</span>
+                </button>
+                <input type="text" value="{{cr.clue}}" onChange="{{cr.change}}" onFocus="{{cr.focus}}" placeholder="Write a clue" aria-label="{{cr.inputAria}}" style="width: 100%; box-sizing: border-box; min-height: 40px; padding: 6px 10px; border: 1px solid #d9d3c3; border-radius: 0; background: #ffffff; font: 400 17px/24px 'Newsreader', Georgia, serif; color: #171717">
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <sc-if value="{{aiOpen}}" hint-placeholder-val="{{true}}">
+        <aside aria-label="Assistant" style="flex: 0 1 340px; min-width: 280px; display: flex; flex-direction: column; background: #ffffff; border: 1px solid #d9d3c3">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 16px; border-bottom: 1px solid #d9d3c3">
+            <span style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 600">Assistant</span>
+            <button type="button" onClick="{{toggleAi}}" style="min-height: 44px; padding: 0 10px; background: transparent; border: 0; color: #1c5aa6; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Close</button>
+          </div>
+          <div style="padding: 10px 16px; border-bottom: 1px solid #d9d3c3; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">{{aiContext}}</span>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+              <button type="button" onClick="{{askFill}}" style="min-height: 40px; padding: 0 8px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 13px/18px 'Libre Franklin', sans-serif; cursor: pointer">Suggest fill</button>
+              <button type="button" onClick="{{askClues}}" style="min-height: 40px; padding: 0 8px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 13px/18px 'Libre Franklin', sans-serif; cursor: pointer">Draft clues</button>
+              <button type="button" onClick="{{askChecks}}" style="min-height: 40px; padding: 0 8px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 13px/18px 'Libre Franklin', sans-serif; cursor: pointer">Explain checks</button>
+              <button type="button" onClick="{{askStyle}}" style="min-height: 40px; padding: 0 8px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 13px/18px 'Libre Franklin', sans-serif; cursor: pointer">Review clue style</button>
+            </div>
+          </div>
+          <div aria-live="polite" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 14px; max-height: 560px; min-height: 280px; overflow-y: auto; background: #f6f3ea">
+            <sc-for list="{{aiMsgs}}" as="msg" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 4px; align-items: {{msg.align}}">
+                <span style="font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; color: #5e5b53">{{msg.who}}</span>
+                <div style="max-width: 92%; background: #ffffff; border: 1px solid #d9d3c3; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 14px; line-height: 20px; white-space: pre-line">{{msg.text}}</span>
+                  <sc-if value="{{msg.hasChips}}" hint-placeholder-val="{{false}}">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                      <sc-for list="{{msg.chips}}" as="chip" hint-placeholder-count="4">
+                        <button type="button" onClick="{{chip.apply}}" aria-label="{{chip.aria}}" style="min-height: 32px; padding: 0 8px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 700 12px/16px 'Libre Franklin', sans-serif; letter-spacing: 0.1em; cursor: pointer">{{chip.label}}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{msg.hasClues}}" hint-placeholder-val="{{false}}">
+                    <div style="display: flex; flex-direction: column; gap: 6px">
+                      <sc-for list="{{msg.clueItems}}" as="ci" hint-placeholder-count="2">
+                        <div style="display: flex; gap: 8px; align-items: center; border-top: 1px solid #ece7da; padding-top: 6px">
+                          <span style="flex-grow: 1; font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 24px">{{ci.text}}</span>
+                          <button type="button" onClick="{{ci.apply}}" aria-label="{{ci.aria}}" style="min-height: 32px; padding: 0 10px; background: #ffffff; color: #171717; border: 1px solid #171717; border-radius: 2px; font: 600 12px/16px 'Libre Franklin', sans-serif; cursor: pointer; flex: none">Use</button>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <form onSubmit="{{askFree}}" style="display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid #d9d3c3">
+            <label for="ai-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Ask the assistant</label>
+            <input id="ai-input" type="text" value="{{aiText}}" onChange="{{setAiText}}" placeholder="Ask about this puzzle" style="flex-grow: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid #171717; border-radius: 0; background: #ffffff; font: 400 14px/20px 'Libre Franklin', sans-serif; color: #171717; box-sizing: border-box">
+            <button type="submit" style="min-height: 44px; padding: 0 14px; background: #171717; color: #f6f3ea; border: 1px solid #171717; border-radius: 2px; font: 600 14px/20px 'Libre Franklin', sans-serif; cursor: pointer">Ask</button>
+          </form>
+        </aside>
+      </sc-if>
+    </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startScreen":{"editor":"enum","options":["editor","setup"],"default":"editor","section":"Prototype"},"$preview":{"width":1440,"height":1140}}'>
+var SAMPLE15 = [
+  '....#.....#....',
+  '....#.....#....',
+  '..........#....',
+  '...#....#......',
+  '......#....#...',
+  '###....#.......',
+  '....#....#.....',
+  '....#.....#....',
+  '.....#....#....',
+  '.......#....###',
+  '...#....#......',
+  '......#....#...',
+  '....#..........',
+  '....#.....#....',
+  '....#.....#....'
+];
+var SAMPLE5 = ['....#', '.....', '.....', '.....', '#....'];
+var PREFILL15 = [
+  { r: 0, c: 0, w: 'ACRE', clue: '43,560 square feet' },
+  { r: 0, c: 5, w: 'SLATE', clue: 'List of candidates' },
+  { r: 0, c: 11, w: 'OBOE', clue: 'Woodwind that tunes the orchestra' },
+  { r: 2, c: 0, w: 'CROSSWORDS', clue: 'Puzzles with Across and Down' },
+  { r: 7, c: 0, w: 'ECHO', clue: 'Repeat' },
+  { r: 7, c: 5, w: 'THEME', clue: 'Unifying idea of a Tuesday puzzle' },
+  { r: 7, c: 11, w: 'INKS', clue: 'Inks a contract' },
+  { r: 12, c: 5, w: 'INTERLOCKS', clue: 'Fits together, as gears' },
+  { r: 14, c: 0, w: 'EDIT', clue: '' }
+];
+var SIZES = [
+  { id: 'mini', label: 'Mini', R: 5, C: 5, note: 'A quick warm-up' },
+  { id: 'daily', label: 'Daily', R: 15, C: 15, note: 'Monday to Saturday' },
+  { id: 'sunday', label: 'Sunday', R: 21, C: 21, note: 'The big one' },
+  { id: 'custom', label: 'Custom', R: 0, C: 0, note: 'Up to 25 × 25' }
+];
+var WORDLIST = (
+  'ACE ACT ADO AGE AGO AID AIL AIM AIR ALE ALL AND ANT APE ARC ARE ARK ART ASH ASK ATE AWE AXE BAR BAT BED BEE BET BIT BOA BOW CAT COD CUE DEN DEW DOE EAR EAT EBB EEL EGG ELK ELM EMU END ERA ERE EVE EWE EYE FAN FEE FIG GEL GNU HUE ICE ICY IRE ITS IVY JAR LEI LIE NAP NET NOR OAK OAR OAT ODE OIL ONE ORB ORE OWE OWL PEA PEN PIE RAN RAT RUE RYE SEA SEE SET SKI SPA TAN TEA TEE TOE TON URN USE VAT YEA YEN ZOO ' +
+  'ABLE ACHE ACNE ACRE AIDE ALOE ALSO ALTO AREA ARIA ARMS ATOM AURA AXLE BALE BEAD BEAN CLUE CODE CROW DARE DEAL DONE ECHO EDEN EDIT ELSE EMIT ERIE ERNE ETNA EURO EVEN EVER EXAM GRID HALO IDEA IDLE INCH INKS IOTA IRIS IRON ISLE ITEM LAIR LANE LIEN LIME LINE LOAN LORE NEAR NEST NOTE OBOE ODOR OGLE OLEO OMEN ONCE ONES OPAL OPEN ORAL OREO OVAL OVEN OVER RAIN RANT REAL REIN RIDE RISE ROSE RUSE SAGA SALE SEAT SLOT SNOW SOLO STAR TALE TEAR TIDE TILE TONE TREE TRIO TUNA UNIT URGE USER VASE VEIL WORD YARN ' +
+  'ABOUT ACORN ADORE AISLE ALERT ALIEN ALONE ALTER AROMA ARENA ASIDE ATONE AUDIO CAUSE CHUTE CLEAN CRANE CRATE CRUDE CRUSE EARTH EASEL ELATE EMOTE ENTER EPOCH ERASE ESSAY ETUDE IDEAL INANE IRATE LASSO LATER LEMON LINER NOTES OASIS OCEAN OLIVE OPERA OTTER OZONE PIANO RATIO RAVEN REACT RESIN RIVER SANER SATIN SENSE SLATE SNARE STAIR STONE TAROT TENOR THEME TIARA TONAL TREAD TRIAL UNTIE USHER UTTER ' +
+  'ACROSS ARCADE ARTIST ATTIRE CORNER EDITOR ENTIRE ERASER ESTATE ORANGE PENCIL PUZZLE RETINA SENIOR SQUARE STREAM TENANT ANAGRAM ANSWERS EDITORS PENCILS REBUSES SOLVERS SQUARES'
+).split(' ');
+var CLUEBANK = {
+  ACRE: ['43,560 square feet', 'Farm measure'],
+  SLATE: ['List of candidates', 'Clean ___ (fresh start)'],
+  OBOE: ['Woodwind that tunes the orchestra', 'Double-reed instrument'],
+  CROSSWORDS: ['Puzzles with Across and Down', 'Grid-based word games'],
+  ECHO: ['Repeat', 'Canyon comeback?'],
+  THEME: ['Unifying idea of a Tuesday puzzle', 'Opening-credits music'],
+  INKS: ['Signs, as a contract', 'Squid defenses'],
+  INTERLOCKS: ['Fits together, as gears', 'Connects tightly'],
+  EDIT: ['Revise', 'Cut and paste, say'],
+  ALOE: ['Sunburn soother', 'Gel plant'],
+  AREA: ['Length times width, for a rectangle', 'Neighborhood'],
+  ERIE: ['One of the Great Lakes', 'Lake bordering Buffalo'],
+  OREO: ['Cookie with a creme filling', 'Black-and-white treat'],
+  IDEA: ['Brainstorm result', 'Notion'],
+  ERA: ['Historical period', 'Pitching stat'],
+  EEL: ['Slippery swimmer', 'Moray, e.g.'],
+  ARIA: ['Opera solo', 'Diva’s showpiece'],
+  OPAL: ['October birthstone', 'Iridescent gem'],
+  ETNA: ['Sicilian volcano', 'Mount near Catania'],
+  IRATE: ['Furious', 'Hot under the collar'],
+  OCEAN: ['Pacific, for one', 'Atlantic, e.g.'],
+  TENOR: ['Voice above baritone', 'General drift'],
+  PIANO: ['88-key instrument', 'Soft, on a score'],
+  ATONE: ['Make amends', 'Pay for one’s sins'],
+  CLUE: ['Hint at the end of a line?', 'Detective’s find'],
+  GRID: ['Crossword framework', 'Power ___'],
+  LEMON: ['Dud of a car', 'Citrus fruit'],
+  ACROSS: ['Not down, in a crossword', 'From one side to the other'],
+  PENCIL: ['Solver’s tool for tentative answers', 'No. 2, e.g.'],
+  SQUARE: ['Grid unit', 'Old-fashioned sort'],
+  TIARA: ['Pageant crown', 'Jeweled headpiece'],
+  OASIS: ['Desert refuge', 'Welcome respite'],
+  ETUDE: ['Practice piece for piano', 'Chopin composition'],
+  CAUSE: ['Reason', 'Movement to support'],
+  CHUTE: ['Laundry ___', 'Parachute, informally'],
+  CRUDE: ['Unrefined', 'Oil before refining']
+};
+var INTRO = { role: 'ai', text: 'Select an entry, then pick a task. I can see your crossings and which checks fail.' };
+
+function analyze(g, R, C) {
+  var B = function (r, c) { return g[r * C + c] === '#'; };
+  var num = [], across = [], down = [], n = 0, i, r, c, k;
+  for (i = 0; i < R * C; i++) num.push(0);
+  for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+    if (B(r, c)) continue;
+    var sa = (c === 0 || B(r, c - 1)) && c + 1 < C && !B(r, c + 1);
+    var sd = (r === 0 || B(r - 1, c)) && r + 1 < R && !B(r + 1, c);
+    if (sa || sd) { n++; num[r * C + c] = n; }
+    if (sa) { var ca = []; for (k = c; k < C && !B(r, k); k++) ca.push(r * C + k); across.push({ key: r + '-' + c + '-A', num: n, dir: 'A', cells: ca }); }
+    if (sd) { var cd = []; for (k = r; k < R && !B(k, c); k++) cd.push(k * C + c); down.push({ key: r + '-' + c + '-D', num: n, dir: 'D', cells: cd }); }
+  }
+  var asym = [], unchecked = [], blocks = 0, open = [];
+  for (i = 0; i < R * C; i++) {
+    var rr = Math.floor(i / C), cc = i % C;
+    if (g[i] === '#') { blocks++; if (g[R * C - 1 - i] !== '#') asym.push(i); continue; }
+    open.push(i);
+    var h = (cc > 0 && !B(rr, cc - 1)) || (cc < C - 1 && !B(rr, cc + 1));
+    var v = (rr > 0 && !B(rr - 1, cc)) || (rr < R - 1 && !B(rr + 1, cc));
+    if (!h || !v) unchecked.push(i);
+  }
+  var short = [], shortCount = 0;
+  across.concat(down).forEach(function (w) { if (w.cells.length < 3) { shortCount++; short = short.concat(w.cells); } });
+  var comp = {}, comps = [];
+  open.forEach(function (s0) {
+    if (comp[s0] !== undefined) return;
+    var id = comps.length, members = [s0], q = [s0]; comp[s0] = id;
+    while (q.length) {
+      var x = q.pop(), xr = Math.floor(x / C), xc = x % C;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        var nr = xr + d[0], nc = xc + d[1];
+        if (nr < 0 || nc < 0 || nr >= R || nc >= C) return;
+        var y = nr * C + nc;
+        if (g[y] === '#' || comp[y] !== undefined) return;
+        comp[y] = id; members.push(y); q.push(y);
+      });
+    }
+    comps.push(members);
+  });
+  var cut = [];
+  if (comps.length > 1) {
+    var big = 0; comps.forEach(function (m, j) { if (m.length > comps[big].length) big = j; });
+    comps.forEach(function (m, j) { if (j !== big) cut = cut.concat(m); });
+  }
+  return { num: num, across: across, down: down, asym: asym, unchecked: unchecked, short: short, shortCount: shortCount, cut: cut, blocks: blocks, open: open.length, words: across.length + down.length };
+}
+
+function wordText(g, w) { return w.cells.map(function (i) { return g[i] || '?'; }).join(''); }
+function wordLabel(w) { return w.num + (w.dir === 'A' ? ' Across' : ' Down'); }
+
+function validate(s, m) {
+  var R = s.R, C = s.C, g = s.g, total = R * C, out = [];
+  function ck(id, label, status, detail, cells, why) { out.push({ id: id, label: label, status: status, detail: detail, cells: cells || [], why: why || '' }); }
+  var words = m.across.concat(m.down);
+  if (s.nyt) {
+    var sizeOk = (R === 15 && C === 15) || (R === 21 && C === 21);
+    ck('size', 'Grid size', sizeOk ? 'pass' : 'fail', R + ' × ' + C + (sizeOk ? (R === 21 ? ' Sunday' : ' daily') : ' · needs 15 × 15 or 21 × 21'), [],
+      'NYT takes 15 × 15 dailies and 21 × 21 Sundays. Start a new puzzle at one of those sizes in Puzzle settings.');
+    ck('sym', 'Rotational symmetry', m.asym.length ? 'fail' : 'pass', m.asym.length ? m.asym.length + ' unpaired black ' + (m.asym.length === 1 ? 'square' : 'squares') : 'Matches at 180°', m.asym,
+      m.asym.length + ' black ' + (m.asym.length === 1 ? 'square has' : 'squares have') + ' no partner at the rotated position. Add the partner, or remove the square.');
+    ck('interlock', 'All-over interlock', m.cut.length ? 'fail' : 'pass', m.cut.length ? m.cut.length + ' squares cut off' : 'One connected grid', m.cut,
+      'Part of the grid is walled off from the rest. Open a black square on the border between the sections.');
+    ck('checked', 'No unchecked squares', m.unchecked.length ? 'fail' : 'pass', m.unchecked.length ? m.unchecked.length + ' in only one word' : 'Every letter crosses', m.unchecked,
+      m.unchecked.length + (m.unchecked.length === 1 ? ' square belongs' : ' squares belong') + ' to only one answer. Every letter should be part of an Across and a Down.');
+  }
+  ck('short', 'Every answer 3+ letters', m.shortCount ? 'fail' : 'pass', m.shortCount ? m.shortCount + ' too short' : 'No 2-letter entries', m.short,
+    m.shortCount + (m.shortCount === 1 ? ' entry is' : ' entries are') + ' under 3 letters. Move a black square to lengthen or remove them.');
+  if (s.nyt) {
+    var max = R === 21 ? 140 : (s.ptype === 'themeless' ? 72 : 78);
+    ck('count', 'Word count', m.words <= max ? 'pass' : 'fail', m.words + ' of ' + max + ' max', [],
+      'The grid has ' + m.words + ' answers; the limit is ' + max + '. Remove black squares to make fewer, longer entries.');
+    var lim = Math.floor(total / 6);
+    ck('blocks', 'Black squares', m.blocks <= lim ? 'pass' : 'warn', m.blocks + ' · guideline ' + lim + ' or fewer', [],
+      m.blocks + ' black squares is more than a sixth of the grid. Editors tend to push back on heavy grids.');
+  }
+  var seen = {}, dupeCells = [], dupeWords = [];
+  words.forEach(function (w) {
+    var t = wordText(g, w);
+    if (t.indexOf('?') >= 0) return;
+    if (seen[t]) { dupeCells = dupeCells.concat(w.cells, seen[t].cells); if (dupeWords.indexOf(t) < 0) dupeWords.push(t); }
+    else seen[t] = w;
+  });
+  ck('dupes', 'No repeated answers', dupeWords.length ? 'fail' : 'pass', dupeWords.length ? dupeWords.join(', ') : 'Each answer used once', dupeCells,
+    dupeWords.join(', ') + ' ' + (dupeWords.length === 1 ? 'appears' : 'appear') + ' more than once. Change one of the entries.');
+  var filled = 0; for (var i = 0; i < total; i++) if (g[i] && g[i] !== '#') filled++;
+  ck('filled', 'Every square filled', filled === m.open ? 'pass' : 'todo', filled + ' of ' + m.open + ' squares', [], '');
+  var clued = words.filter(function (w) { return (s.clues[w.key] || '').trim(); }).length;
+  ck('clued', 'Every answer clued', clued === words.length && words.length ? 'pass' : 'todo', clued + ' of ' + words.length + ' clues', [], '');
+  return out;
+}
+
+function makePuzzle(sizeId, R, C, start) {
+  var g = [], clues = {}, i;
+  if (start === 'sample' && sizeId === 'daily') {
+    SAMPLE15.forEach(function (row) { row.split('').forEach(function (ch) { g.push(ch === '#' ? '#' : ''); }); });
+    PREFILL15.forEach(function (p) {
+      for (var j = 0; j < p.w.length; j++) g[p.r * 15 + p.c + j] = p.w[j];
+      if (p.clue) clues[p.r + '-' + p.c + '-A'] = p.clue;
+    });
+    return { g: g, clues: clues, cur: 15 };
+  }
+  if (start === 'sample' && sizeId === 'mini') {
+    SAMPLE5.forEach(function (row) { row.split('').forEach(function (ch) { g.push(ch === '#' ? '#' : ''); }); });
+    return { g: g, clues: clues, cur: 0 };
+  }
+  for (i = 0; i < R * C; i++) g.push('');
+  return { g: g, clues: clues, cur: 0 };
+}
+
+function dimsFor(s) {
+  if (s.sizeId === 'custom') return { R: s.customR, C: s.customC };
+  var z = SIZES.filter(function (x) { return x.id === s.sizeId; })[0];
+  return { R: z.R, C: z.C };
+}
+
+function findActive(s, m) {
+  var list = s.dir === 'A' ? m.across : m.down, other = s.dir === 'A' ? m.down : m.across;
+  var hit = list.filter(function (w) { return w.cells.indexOf(s.cur) >= 0; })[0];
+  if (hit) return hit;
+  return other.filter(function (w) { return w.cells.indexOf(s.cur) >= 0; })[0] || null;
+}
+
+class Component extends DCLogic {
+  initial() {
+    var p = makePuzzle('daily', 15, 15, 'sample');
+    return {
+      ready: true, screen: this.props.startScreen === 'setup' ? 'setup' : 'editor', fromEditor: false,
+      sizeId: 'daily', customR: 15, customC: 15, nyt: true, ptype: 'themed', start: 'sample',
+      title: 'Untitled puzzle', author: '',
+      R: 15, C: 15, g: p.g, clues: p.clues, cur: p.cur, dir: 'A', mode: 'letters', mirror: true,
+      flag: null, tab: 'A', aiOpen: true, aiMsgs: [INTRO], aiText: '', gridFocused: false
+    };
+  }
+  S() { return (this.state && this.state.ready) ? this.state : this.initial(); }
+  upd(ch) { this.setState(Object.assign({}, this.S(), ch, { ready: true })); }
+
+  toggledGrid(s, i) {
+    var g = s.g.slice(), nv = g[i] === '#' ? '' : '#';
+    g[i] = nv;
+    if (s.mirror || s.nyt) g[s.R * s.C - 1 - i] = nv;
+    return g;
+  }
+  step(s, g, d) {
+    var C = s.C, R = s.R, r = Math.floor(s.cur / C), c = s.cur % C;
+    if (s.dir === 'A') c += d; else r += d;
+    if (r < 0 || c < 0 || r >= R || c >= C) return s.cur;
+    var j = r * C + c;
+    return g[j] === '#' ? s.cur : j;
+  }
+  onKey(e) {
+    var s = this.S(), C = s.C, R = s.R, k = e.key;
+    var r = Math.floor(s.cur / C), c = s.cur % C;
+    if (k === 'ArrowRight' || k === 'ArrowLeft' || k === 'ArrowUp' || k === 'ArrowDown') {
+      e.preventDefault();
+      var dr = k === 'ArrowDown' ? 1 : (k === 'ArrowUp' ? -1 : 0), dc = k === 'ArrowRight' ? 1 : (k === 'ArrowLeft' ? -1 : 0);
+      var nd = dc !== 0 ? 'A' : 'D';
+      if (nd !== s.dir && s.mode === 'letters') { this.upd({ dir: nd }); return; }
+      var nr = Math.max(0, Math.min(R - 1, r + dr)), nc = Math.max(0, Math.min(C - 1, c + dc));
+      this.upd({ cur: nr * C + nc, dir: nd });
+      return;
+    }
+    if (k === ' ') { e.preventDefault(); if (s.mode === 'blocks') this.upd({ g: this.toggledGrid(s, s.cur) }); else this.upd({ dir: s.dir === 'A' ? 'D' : 'A' }); return; }
+    if (k === '.' || (k === 'Enter' && s.mode === 'blocks')) { e.preventDefault(); this.upd({ g: this.toggledGrid(s, s.cur) }); return; }
+    if (s.mode !== 'letters') return;
+    if (/^[a-zA-Z]$/.test(k)) {
+      e.preventDefault();
+      if (s.g[s.cur] === '#') return;
+      var g2 = s.g.slice(); g2[s.cur] = k.toUpperCase();
+      this.upd({ g: g2, cur: this.step(s, g2, 1) });
+      return;
+    }
+    if (k === 'Backspace') {
+      e.preventDefault();
+      var g3 = s.g.slice();
+      if (g3[s.cur] && g3[s.cur] !== '#') { g3[s.cur] = ''; this.upd({ g: g3 }); return; }
+      var prev = this.step(s, g3, -1);
+      if (g3[prev] !== '#') g3[prev] = '';
+      this.upd({ g: g3, cur: prev });
+      return;
+    }
+    if (k === 'Delete') { e.preventDefault(); var g4 = s.g.slice(); if (g4[s.cur] !== '#') g4[s.cur] = ''; this.upd({ g: g4 }); }
+  }
+  clickCell(i) {
+    var s = this.S();
+    if (this.gridEl && this.gridEl.focus) { try { this.gridEl.focus({ preventScroll: true }); } catch (err) {} }
+    if (s.mode === 'blocks') { this.upd({ g: this.toggledGrid(s, i), cur: i }); return; }
+    if (i === s.cur) this.upd({ dir: s.dir === 'A' ? 'D' : 'A' });
+    else this.upd({ cur: i });
+  }
+  selectWord(w) {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), act = findActive(s, m);
+    if (act && act.key === w.key) return;
+    this.upd({ cur: w.cells[0], dir: w.dir, tab: w.dir });
+  }
+  stepClue(d) {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), all = m.across.concat(m.down);
+    if (!all.length) return;
+    var act = findActive(s, m), idx = act ? all.map(function (w) { return w.key; }).indexOf(act.key) : -1;
+    var nx = all[(idx + d + all.length) % all.length];
+    this.upd({ cur: nx.cells[0], dir: nx.dir, tab: nx.dir });
+  }
+  create() {
+    var s = this.S(), d = dimsFor(s);
+    var start = (s.start === 'sample' && (s.sizeId === 'daily' || s.sizeId === 'mini')) ? 'sample' : 'blank';
+    var p = makePuzzle(s.sizeId, d.R, d.C, start);
+    this.upd({ screen: 'editor', R: d.R, C: d.C, g: p.g, clues: p.clues, cur: p.cur, dir: 'A', flag: null, tab: 'A', fromEditor: false, aiMsgs: [INTRO], mirror: true });
+  }
+
+  aiReply(userText, reply) {
+    var s = this.S();
+    var msgs = s.aiMsgs.concat([{ role: 'you', text: userText }, reply]);
+    if (msgs.length > 14) msgs = msgs.slice(msgs.length - 14);
+    this.upd({ aiMsgs: msgs, aiOpen: true });
+  }
+  askFill() {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), w = findActive(s, m);
+    if (!w) { this.aiReply('Suggest fill', { role: 'ai', text: 'Select a white square in an entry first.' }); return; }
+    var pat = wordText(s.g, w), label = wordLabel(w);
+    if (pat.indexOf('?') < 0) { this.aiReply('Suggest fill for ' + label, { role: 'ai', text: label + ' is full: ' + pat + '. Clear a square to see other options.' }); return; }
+    var inGrid = {};
+    m.across.concat(m.down).forEach(function (x) { inGrid[wordText(s.g, x)] = true; });
+    var hits = WORDLIST.filter(function (cand) {
+      if (cand.length !== pat.length || inGrid[cand]) return false;
+      for (var j = 0; j < pat.length; j++) if (pat[j] !== '?' && pat[j] !== cand[j]) return false;
+      return true;
+    }).slice(0, 8);
+    if (!hits.length) { this.aiReply('Suggest fill for ' + label, { role: 'ai', text: 'Nothing in the word list fits ' + pat + '. Try changing a crossing letter.' }); return; }
+    this.aiReply('Suggest fill for ' + label, { role: 'ai', text: hits.length + (hits.length === 1 ? ' word fits ' : ' words fit ') + pat + '. Pick one to place it.', chips: hits.map(function (h) { return { kind: 'fill', key: w.key, word: h }; }) });
+  }
+  askClues() {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), w = findActive(s, m);
+    if (!w) { this.aiReply('Draft clues', { role: 'ai', text: 'Select an entry first.' }); return; }
+    var t = wordText(s.g, w), label = wordLabel(w);
+    if (t.indexOf('?') >= 0) { this.aiReply('Draft clues for ' + label, { role: 'ai', text: 'Fill ' + label + ' first, then I can draft clues for it.' }); return; }
+    var bank = CLUEBANK[t] || ['[DRAFT CLUE FOR ' + t + ', EASY]', '[DRAFT CLUE FOR ' + t + ', TRICKY]'];
+    this.aiReply('Draft clues for ' + label + ', ' + t, { role: 'ai', text: 'Two drafts for ' + t + ', easier first:', clues: bank.map(function (c) { return { key: w.key, text: c }; }) });
+  }
+  askChecks() {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), checks = validate(s, m);
+    var bad = checks.filter(function (c) { return c.status === 'fail' || c.status === 'warn'; });
+    if (!bad.length) {
+      var todo = checks.filter(function (c) { return c.status === 'todo'; });
+      this.aiReply('Explain checks', { role: 'ai', text: todo.length ? 'Every rule passes. Still to do: ' + todo.map(function (c) { return c.label.toLowerCase() + ' (' + c.detail + ')'; }).join('; ') + '.' : 'Every check passes. This grid is ready to submit.' });
+      return;
+    }
+    this.aiReply('Explain checks', {
+      role: 'ai',
+      text: bad.map(function (c) { return c.label + ': ' + c.why; }).join('\n\n'),
+      chips: bad.filter(function (c) { return c.cells.length; }).map(function (c) { return { kind: 'flag', id: c.id, label: 'Show ' + c.label.toLowerCase() }; })
+    });
+  }
+  askStyle() {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), words = m.across.concat(m.down), notes = [], chips = [], empty = 0, written = 0;
+    words.forEach(function (w) {
+      var clue = (s.clues[w.key] || '').trim(), t = wordText(s.g, w), label = wordLabel(w);
+      if (!clue) { if (t.indexOf('?') < 0) empty++; return; }
+      written++;
+      var issue = '';
+      if (t.indexOf('?') < 0 && new RegExp('\\b' + t + '\\b', 'i').test(clue)) issue = label + ' uses its own answer, ' + t + ', in the clue.';
+      else if (/_/.test(clue) && !/(^|[^_])___([^_]|$)/.test(clue)) issue = label + ': blanks take exactly three underscores, ___.';
+      else if (/!/.test(clue)) issue = label + ': skip exclamation marks in clues.';
+      if (issue) { notes.push(issue); chips.push({ kind: 'goto', key: w.key, label: w.num + w.dir }); }
+    });
+    var head = written + ' clues written.' + (empty ? ' ' + empty + ' filled ' + (empty === 1 ? 'entry still needs' : 'entries still need') + ' a clue.' : '');
+    this.aiReply('Review clue style', { role: 'ai', text: notes.length ? head + '\n\n' + notes.slice(0, 6).join('\n') : head + ' No style problems found.', chips: chips.slice(0, 6) });
+  }
+  askFree(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var s = this.S(), q = (s.aiText || '').trim();
+    if (!q) return;
+    var msgs = s.aiMsgs.concat([{ role: 'you', text: q }, { role: 'ai', text: '[ASSISTANT ANSWER ABOUT: “' + q + '”]' }]);
+    if (msgs.length > 14) msgs = msgs.slice(msgs.length - 14);
+    this.upd({ aiMsgs: msgs, aiText: '' });
+  }
+  applyChip(item) {
+    var s = this.S(), m = analyze(s.g, s.R, s.C), all = m.across.concat(m.down);
+    if (item.kind === 'flag') { this.upd({ flag: item.id }); return; }
+    var w = all.filter(function (x) { return x.key === item.key; })[0];
+    if (!w) return;
+    if (item.kind === 'goto') { this.upd({ cur: w.cells[0], dir: w.dir, tab: w.dir }); return; }
+    if (item.kind === 'fill' && item.word.length === w.cells.length) {
+      var g = s.g.slice();
+      w.cells.forEach(function (ci, j) { g[ci] = item.word[j]; });
+      this.upd({ g: g, cur: w.cells[0], dir: w.dir, tab: w.dir });
+    }
+  }
+  applyClue(item) {
+    var s = this.S(), cl = Object.assign({}, s.clues); cl[item.key] = item.text;
+    this.upd({ clues: cl });
+  }
+
+  renderVals() {
+    var self = this, s = this.S(), R = s.R, C = s.C, g = s.g;
+    var m = analyze(g, R, C);
+    var active = findActive(s, m);
+    var activeSet = {};
+    if (active) active.cells.forEach(function (i) { activeSet[i] = true; });
+    var checks = validate(s, m);
+    var flagCheck = checks.filter(function (c) { return c.id === s.flag; })[0];
+    var flagSet = {};
+    if (flagCheck && flagCheck.status !== 'pass') flagCheck.cells.forEach(function (i) { flagSet[i] = true; });
+
+    var maxDim = Math.max(R, C);
+    var cs = maxDim <= 7 ? 48 : (maxDim <= 15 ? 40 : 32);
+    var numFs = Math.round(cs * 0.25), letFs = Math.round(cs * 0.6), letMt = Math.round(cs * 0.12);
+
+    var cells = g.map(function (v, i) {
+      var r = Math.floor(i / C), c = i % C, isB = v === '#', isCur = i === s.cur;
+      var bg = isB ? '#171717' : (isCur ? '#ffd43b' : (activeSet[i] ? '#c6def5' : '#ffffff'));
+      var ring = isCur ? (isB ? 'inset 0 0 0 3px #ffd43b' : 'inset 0 0 0 2px #171717') : 'none';
+      return {
+        size: cs, numFs: numFs, letFs: letFs, letMt: letMt,
+        bg: bg, ring: ring,
+        hasNum: !isB && m.num[i] > 0, num: m.num[i],
+        letter: isB ? '' : (v || ''),
+        flag: !!flagSet[i],
+        aria: 'Row ' + (r + 1) + ', column ' + (c + 1) + (isB ? ', black square' : (v ? ', ' + v : ', empty')),
+        click: function () { self.clickCell(i); }
+      };
+    });
+
+    var list = s.tab === 'D' ? m.down : m.across;
+    var clueRows = list.map(function (w) {
+      var isAct = active && active.key === w.key;
+      var dirWord = w.dir === 'A' ? 'Across' : 'Down';
+      return {
+        num: w.num + w.dir,
+        pattern: w.cells.map(function (i) { return g[i] || '·'; }).join(''),
+        len: '(' + w.cells.length + ')',
+        clue: s.clues[w.key] || '',
+        bg: isAct ? '#c6def5' : '#ffffff',
+        selectAria: 'Select ' + w.num + ' ' + dirWord,
+        inputAria: 'Clue for ' + w.num + ' ' + dirWord,
+        select: function () { self.selectWord(w); },
+        focus: function () { self.selectWord(w); },
+        change: function (e) { var cl = Object.assign({}, self.S().clues); cl[w.key] = e.target.value; self.upd({ clues: cl }); }
+      };
+    });
+
+    var counted = checks.filter(function (c) { return c.status !== 'todo'; });
+    var passing = counted.filter(function (c) { return c.status === 'pass'; }).length;
+    var allDone = checks.every(function (c) { return c.status === 'pass'; });
+    var ckRows = checks.map(function (c) {
+      var showing = s.flag === c.id;
+      return {
+        label: c.label, detail: c.detail,
+        isPass: c.status === 'pass', isFail: c.status === 'fail', isWarn: c.status === 'warn', isTodo: c.status === 'todo',
+        color: c.status === 'fail' ? '#ad3307' : '#171717',
+        bg: showing ? '#f6f3ea' : '#ffffff',
+        canShow: c.status !== 'pass' && c.cells.length > 0,
+        showing: showing,
+        showLabel: showing ? 'Hide' : 'Show',
+        show: function () { self.upd({ flag: showing ? null : c.id }); }
+      };
+    });
+
+    var activeClue = active ? (s.clues[active.key] || '') : '';
+    var aiMsgs = s.aiMsgs.map(function (msg) {
+      var chips = (msg.chips || []).map(function (it) {
+        return {
+          label: it.kind === 'fill' ? it.word : it.label,
+          aria: it.kind === 'fill' ? 'Place ' + it.word : it.label,
+          apply: function () { self.applyChip(it); }
+        };
+      });
+      var clueItems = (msg.clues || []).map(function (it) {
+        return { text: it.text, aria: 'Use clue: ' + it.text, apply: function () { self.applyClue(it); } };
+      });
+      return {
+        who: msg.role === 'you' ? 'YOU' : 'ASSISTANT',
+        align: msg.role === 'you' ? 'flex-end' : 'flex-start',
+        text: msg.text,
+        hasChips: chips.length > 0, chips: chips,
+        hasClues: clueItems.length > 0, clueItems: clueItems
+      };
+    });
+
+    var sizes = SIZES.map(function (z) {
+      var on = s.sizeId === z.id;
+      return {
+        dims: z.id === 'custom' ? s.customR + ' × ' + s.customC : z.R + ' × ' + z.C,
+        label: z.label, note: z.note, checked: on,
+        ring: on ? 'inset 0 0 0 2px #171717' : 'none',
+        pick: function () { self.upd({ sizeId: z.id }); }
+      };
+    });
+    var setDims = dimsFor(s);
+    var sizeIsNyt = (setDims.R === 15 && setDims.C === 15) || (setDims.R === 21 && setDims.C === 21);
+    var sampleDisabled = !(s.sizeId === 'daily' || s.sizeId === 'mini');
+    var maxWords = R === 21 ? 140 : (s.ptype === 'themeless' ? 72 : 78);
+    var typeName = R === 21 && C === 21 ? 'Sunday' : (s.nyt && R === 15 && C === 15 ? (s.ptype === 'themeless' ? 'Themeless' : 'Themed') : 'Practice');
+    function clampDim(v) { var n = parseInt(v, 10); if (isNaN(n)) n = 15; return Math.max(3, Math.min(25, n)); }
+
+    return {
+      isSetup: s.screen === 'setup',
+      isEditor: s.screen === 'editor',
+      titleShown: s.title || 'Untitled puzzle',
+      metaLine: s.screen === 'setup' ? 'New puzzle' : (R + ' × ' + C + ' · ' + typeName + ' · ' + (s.nyt ? 'NYT rules on' : 'NYT rules off') + (s.author ? ' · by ' + s.author : '')),
+      openSetup: function () { self.upd({ screen: 'setup', fromEditor: true }); },
+      backToGrid: function () { self.upd({ screen: 'editor', fromEditor: false }); },
+      aiOpen: !!s.aiOpen,
+      aiBtnBg: s.aiOpen ? '#c6def5' : '#ffffff',
+      toggleAi: function () { self.upd({ aiOpen: !self.S().aiOpen }); },
+
+      title: s.title, author: s.author,
+      setTitle: function (e) { self.upd({ title: e.target.value }); },
+      setAuthor: function (e) { self.upd({ author: e.target.value }); },
+      sizes: sizes,
+      isCustom: s.sizeId === 'custom',
+      customR: s.customR, customC: s.customC,
+      setCustomR: function (e) { self.upd({ customR: clampDim(e.target.value) }); },
+      setCustomC: function (e) { self.upd({ customC: clampDim(e.target.value) }); },
+      nyt: !!s.nyt,
+      nytRing: s.nyt ? 'inset 0 0 0 2px #171717' : 'none',
+      toggleNyt: function () { self.upd({ nyt: !self.S().nyt, flag: null }); },
+      showSizeWarning: s.nyt && !sizeIsNyt,
+      showPtype: s.nyt && setDims.R === 15 && setDims.C === 15,
+      showSundayNote: s.nyt && setDims.R === 21 && setDims.C === 21,
+      ptypeThemed: s.ptype !== 'themeless', ptypeThemeless: s.ptype === 'themeless',
+      pickThemed: function () { self.upd({ ptype: 'themed' }); },
+      pickThemeless: function () { self.upd({ ptype: 'themeless' }); },
+      sampleDisabled: sampleDisabled,
+      sampleColor: sampleDisabled ? '#5e5b53' : '#171717',
+      startSample: !sampleDisabled && s.start === 'sample',
+      startBlank: sampleDisabled || s.start !== 'sample',
+      pickSample: function () { self.upd({ start: 'sample' }); },
+      pickBlank: function () { self.upd({ start: 'blank' }); },
+      create: function () { self.create(); },
+      fromEditor: !!s.fromEditor,
+
+      gridW: C * (cs + 1) + 3 + 8,
+      gridCols: 'repeat(' + C + ', ' + cs + 'px)',
+      cells: cells,
+      gridRef: function (el) { self.gridEl = el; },
+      onKey: function (e) { self.onKey(e); },
+      gridFocus: function () { if (!self.S().gridFocused) self.upd({ gridFocused: true }); },
+      gridBlur: function () { if (self.S().gridFocused) self.upd({ gridFocused: false }); },
+      gridRing: s.gridFocused ? '0 0 0 2px #f6f3ea, 0 0 0 4px #1c5aa6' : 'none',
+      gridAria: 'Puzzle grid, ' + R + ' by ' + C + '. ' + (s.mode === 'blocks' ? 'Black squares mode.' : 'Letters mode.') + ' Arrow keys move.',
+      helpText: s.mode === 'blocks'
+        ? 'Click a square to make it black' + (s.mirror || s.nyt ? '; its partner mirrors at 180°.' : '.') + ' Arrows move, Space toggles.'
+        : 'Type to fill. Space turns direction, Backspace clears, period places a black square.',
+      isLetters: s.mode === 'letters', isBlocks: s.mode === 'blocks',
+      lettersBg: s.mode === 'letters' ? '#171717' : '#ffffff', lettersFg: s.mode === 'letters' ? '#f6f3ea' : '#171717',
+      blocksBg: s.mode === 'blocks' ? '#171717' : '#ffffff', blocksFg: s.mode === 'blocks' ? '#f6f3ea' : '#171717',
+      modeLetters: function () { self.upd({ mode: 'letters' }); },
+      modeBlocks: function () { self.upd({ mode: 'blocks' }); },
+      mirrorOn: !!(s.mirror || s.nyt),
+      mirrorColor: s.nyt ? '#5e5b53' : '#171717',
+      toggleMirror: function () { self.upd({ mirror: !self.S().mirror }); },
+      clearLetters: function () { self.upd({ g: self.S().g.map(function (v) { return v === '#' ? '#' : ''; }) }); },
+
+      activeChip: active ? active.num + active.dir : '·',
+      activeClueText: active ? (activeClue || 'No clue yet. Write one in the list.') : 'Select a square.',
+      activeClueColor: activeClue ? '#171717' : '#5e5b53',
+      activeClueStyle: activeClue ? 'normal' : 'italic',
+      prevClue: function () { self.stepClue(-1); },
+      nextClue: function () { self.stepClue(1); },
+
+      checksTitle: s.nyt ? 'NYT checks' : 'Checks',
+      checksSummary: allDone ? 'Ready to submit' : (passing + ' of ' + counted.length + ' rules pass'),
+      summaryColor: allDone ? '#171717' : (passing === counted.length ? '#5e5b53' : '#ad3307'),
+      showPtypeSelect: s.nyt && R === 15 && C === 15,
+      ptype: s.ptype,
+      setPtype: function (e) { self.upd({ ptype: e.target.value }); },
+      checks: ckRows,
+
+      isTabA: s.tab !== 'D', isTabD: s.tab === 'D',
+      tabABg: s.tab !== 'D' ? '#171717' : '#ffffff', tabAFg: s.tab !== 'D' ? '#f6f3ea' : '#171717',
+      tabDBg: s.tab === 'D' ? '#171717' : '#ffffff', tabDFg: s.tab === 'D' ? '#f6f3ea' : '#171717',
+      tabAcross: function () { self.upd({ tab: 'A' }); },
+      tabDown: function () { self.upd({ tab: 'D' }); },
+      acrossCount: m.across.length, downCount: m.down.length,
+      clueRows: clueRows,
+
+      aiContext: active ? 'WORKING ON ' + active.num + (active.dir === 'A' ? ' ACROSS' : ' DOWN') + ' · ' + wordText(g, active) : 'NO ENTRY SELECTED',
+      aiMsgs: aiMsgs,
+      askFill: function () { self.askFill(); },
+      askClues: function () { self.askClues(); },
+      askChecks: function () { self.askChecks(); },
+      askStyle: function () { self.askStyle(); },
+      aiText: s.aiText || '',
+      setAiText: function (e) { self.upd({ aiText: e.target.value }); },
+      askFree: function (e) { self.askFree(e); }
+    };
+  }
+}
+</script>
+</body>
+</html>

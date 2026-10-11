@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../tokens/tokens.css">
+<title>Across</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; width:960px; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:288px; }
+  .lines { fill:var(--grid-line); }
+  .sq { fill:var(--cell); }
+  .blk { fill:var(--block); }
+  .word { fill:var(--word); }
+  .hl { fill:var(--highlight); }
+  .ring { fill:none; stroke:var(--on-highlight); stroke-width:var(--stroke-frame); }
+  .sq, .blk, .word, .hl, .lines { rx:var(--radius-none); }
+  .words { position:absolute; left:var(--space-12); bottom:var(--space-8); max-width:440px; }
+  .name { margin:0; font-family:var(--font-serif); font-size:120px; line-height:.92; font-weight:600; letter-spacing:-.02em; color:var(--ink); }
+  .tag { margin:var(--space-3) 0 0 4px; font-family:var(--font-sans); font-size:14px; line-height:20px; color:var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      block (ink) ×20 squares at cell-lg 48 · word ×5 · highlight ×1, the cursor — together ≈22% of 960×288, on a cell field filling the right half
+  arrangement a fragment of a rotationally symmetric 10×7 grid bleeding off the top, right and bottom; the active word runs across the middle row
+  pattern     grid tiles, from "Square, like the grid": cell-lg squares cut by stroke-hair lines in grid-line, the left edge framed at stroke-frame
+  scales      pitch cell-lg (48px); lines stroke-hair, frame and cursor ring stroke-frame; corners radius-none; inset space-12 / space-8
+-->
+<rect class="lines" x="30" y="-24" width="483" height="337"/>
+<rect class="sq" x="33" y="-23" width="47" height="47"/>
+<rect class="sq" x="81" y="-23" width="47" height="47"/>
+<rect class="sq" x="129" y="-23" width="47" height="47"/>
+<rect class="blk" x="177" y="-23" width="47" height="47"/>
+<rect class="sq" x="225" y="-23" width="47" height="47"/>
+<rect class="sq" x="273" y="-23" width="47" height="47"/>
+<rect class="sq" x="321" y="-23" width="47" height="47"/>
+<rect class="sq" x="369" y="-23" width="47" height="47"/>
+<rect class="blk" x="417" y="-23" width="47" height="47"/>
+<rect class="blk" x="465" y="-23" width="47" height="47"/>
+<rect class="sq" x="33" y="25" width="47" height="47"/>
+<rect class="sq" x="81" y="25" width="47" height="47"/>
+<rect class="sq" x="129" y="25" width="47" height="47"/>
+<rect class="blk" x="177" y="25" width="47" height="47"/>
+<rect class="sq" x="225" y="25" width="47" height="47"/>
+<rect class="sq" x="273" y="25" width="47" height="47"/>
+<rect class="sq" x="321" y="25" width="47" height="47"/>
+<rect class="blk" x="369" y="25" width="47" height="47"/>
+<rect class="sq" x="417" y="25" width="47" height="47"/>
+<rect class="sq" x="465" y="25" width="47" height="47"/>
+<rect class="blk" x="33" y="73" width="47" height="47"/>
+<rect class="blk" x="81" y="73" width="47" height="47"/>
+<rect class="sq" x="129" y="73" width="47" height="47"/>
+<rect class="sq" x="177" y="73" width="47" height="47"/>
+<rect class="sq" x="225" y="73" width="47" height="47"/>
+<rect class="blk" x="273" y="73" width="47" height="47"/>
+<rect class="sq" x="321" y="73" width="47" height="47"/>
+<rect class="sq" x="369" y="73" width="47" height="47"/>
+<rect class="sq" x="417" y="73" width="47" height="47"/>
+<rect class="sq" x="465" y="73" width="47" height="47"/>
+<rect class="blk" x="33" y="121" width="47" height="47"/>
+<rect class="blk" x="81" y="121" width="47" height="47"/>
+<rect class="word" x="129" y="121" width="47" height="47"/>
+<rect class="word" x="177" y="121" width="47" height="47"/>
+<rect class="hl" x="225" y="121" width="47" height="47"/>
+<rect class="word" x="273" y="121" width="47" height="47"/>
+<rect class="word" x="321" y="121" width="47" height="47"/>
+<rect class="word" x="369" y="121" width="47" height="47"/>
+<rect class="blk" x="417" y="121" width="47" height="47"/>
+<rect class="blk" x="465" y="121" width="47" height="47"/>
+<rect class="sq" x="33" y="169" width="47" height="47"/>
+<rect class="sq" x="81" y="169" width="47" height="47"/>
+<rect class="sq" x="129" y="169" width="47" height="47"/>
+<rect class="sq" x="177" y="169" width="47" height="47"/>
+<rect class="blk" x="225" y="169" width="47" height="47"/>
+<rect class="sq" x="273" y="169" width="47" height="47"/>
+<rect class="sq" x="321" y="169" width="47" height="47"/>
+<rect class="sq" x="369" y="169" width="47" height="47"/>
+<rect class="blk" x="417" y="169" width="47" height="47"/>
+<rect class="blk" x="465" y="169" width="47" height="47"/>
+<rect class="sq" x="33" y="217" width="47" height="47"/>
+<rect class="sq" x="81" y="217" width="47" height="47"/>
+<rect class="blk" x="129" y="217" width="47" height="47"/>
+<rect class="sq" x="177" y="217" width="47" height="47"/>
+<rect class="sq" x="225" y="217" width="47" height="47"/>
+<rect class="sq" x="273" y="217" width="47" height="47"/>
+<rect class="blk" x="321" y="217" width="47" height="47"/>
+<rect class="sq" x="369" y="217" width="47" height="47"/>
+<rect class="sq" x="417" y="217" width="47" height="47"/>
+<rect class="sq" x="465" y="217" width="47" height="47"/>
+<rect class="blk" x="33" y="265" width="47" height="47"/>
+<rect class="blk" x="81" y="265" width="47" height="47"/>
+<rect class="sq" x="129" y="265" width="47" height="47"/>
+<rect class="sq" x="177" y="265" width="47" height="47"/>
+<rect class="sq" x="225" y="265" width="47" height="47"/>
+<rect class="sq" x="273" y="265" width="47" height="47"/>
+<rect class="blk" x="321" y="265" width="47" height="47"/>
+<rect class="sq" x="369" y="265" width="47" height="47"/>
+<rect class="sq" x="417" y="265" width="47" height="47"/>
+<rect class="sq" x="465" y="265" width="47" height="47"/>
+<rect class="ring" x="226" y="122" width="45" height="45"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Across</h1>
+<p class="tag">Black squares, white space, and a place for every letter.</p>
+</div>
+</div>
+</body>
+</html>

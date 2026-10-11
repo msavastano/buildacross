@@ -1,0 +1,96 @@
+/* Across — generated from tokens.json. Do not edit by hand; change tokens.json and regenerate. */
+
+/* Themes: set data-theme="light" (Newsprint, default) or data-theme="dark" (Night edition) on <html>. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --paper: #f6f3ea;
+  --cell: #ffffff;
+  --ink: #171717;
+  --ink-muted: #5e5b53;
+  --rule: #d9d3c3;
+  --grid-line: #171717;
+  --block: #171717;
+  --highlight: #ffd43b;
+  --on-highlight: #171717;
+  --word: #c6def5;
+  --check: #ad3307;
+  --reveal: #1c5aa6;
+  --pencil: #625f58;
+  --on-ink: #f6f3ea;
+  --link: var(--reveal);
+  --focus-ring: 0 0 0 2px #f6f3ea, 0 0 0 4px #1c5aa6;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #121211;
+  --cell: #1f1e1c;
+  --ink: #ece8de;
+  --ink-muted: #a8a397;
+  --rule: #3a3833;
+  --grid-line: #6e6b63;
+  --block: #6e6b63;
+  --highlight: #e9b949;
+  --on-highlight: #171717;
+  --word: #233f57;
+  --check: #ff8f61;
+  --reveal: #8bbcf0;
+  --pencil: #b3afa4;
+  --on-ink: #171717;
+  --link: var(--reveal);
+  --focus-ring: 0 0 0 2px #121211, 0 0 0 4px #8bbcf0;
+}
+
+/* Optional: follow the OS setting when no data-theme is set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --paper: #121211;
+    --cell: #1f1e1c;
+    --ink: #ece8de;
+    --ink-muted: #a8a397;
+    --rule: #3a3833;
+    --grid-line: #6e6b63;
+    --block: #6e6b63;
+    --highlight: #e9b949;
+    --on-highlight: #171717;
+    --word: #233f57;
+    --check: #ff8f61;
+    --reveal: #8bbcf0;
+    --pencil: #b3afa4;
+    --on-ink: #171717;
+    --link: var(--reveal);
+    --focus-ring: 0 0 0 2px #121211, 0 0 0 4px #8bbcf0;
+  }
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-circle: 50%;
+  --cell-sm: 32px;
+  --cell-md: 40px;
+  --cell-lg: 48px;
+  --stroke-hair: 1px;
+  --stroke-frame: 2px;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-sans: "Libre Franklin", "Franklin Gothic Medium", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Type styles — one class per style in tokens.json */
+.ac-text-display { font-family: var(--font-serif); font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.01em; }
+.ac-text-headline { font-family: var(--font-serif); font-size: 26px; line-height: 32px; font-weight: 600; }
+.ac-text-clue { font-family: var(--font-serif); font-size: 17px; line-height: 24px; font-weight: 400; }
+.ac-text-body { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 400; }
+.ac-text-ui { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
+.ac-text-label { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.ac-text-cell-letter { font-family: var(--font-sans); font-size: 24px; line-height: 24px; font-weight: 500; }
+.ac-text-cell-number { font-family: var(--font-sans); font-size: 10px; line-height: 10px; font-weight: 500; }
