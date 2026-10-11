@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Across — component gallery</title>
+<!-- Open this file directly in a browser. Loads the reference bundle (components/reference) and React 18 from jsDelivr. -->
+<link rel="stylesheet" href="../tokens/tokens.css">
+<link rel="stylesheet" href="../components/reference/bundle.css">
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="../components/reference/bundle.js"></script>
+<style>
+  .page { max-width: 1040px; margin: 0 auto; padding: var(--space-8) var(--space-6); }
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;
+    border-bottom: var(--stroke-frame) solid var(--ink); padding-bottom: var(--space-3); margin-bottom: var(--space-8); }
+  .masthead h1 { margin: 0; }
+  section.spec { margin-bottom: var(--space-8); }
+  section.spec > h2 { margin: 0 0 var(--space-2); }
+  section.spec > p { margin: 0 0 var(--space-4); color: var(--ink-muted); max-width: 640px; }
+  .panel { background: var(--cell); border: var(--stroke-hair) solid var(--rule); }
+  .puzzle { display: grid; grid-template-columns: auto 1fr 1fr; gap: var(--space-6); align-items: start; padding: var(--space-4); }
+  .puzzle .left { display: flex; flex-direction: column; gap: 0; }
+  @media (max-width: 720px) { .puzzle { grid-template-columns: 1fr; } }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); padding: var(--space-4); }
+  .sw { display: flex; flex-direction: column; gap: var(--space-1); }
+  .sw i { display: block; height: 48px; border: var(--stroke-hair) solid var(--rule); }
+  .sw code { font-size: 12px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <h1 class="ac-text-display">Across</h1>
+    <div id="theme"></div>
+  </header>
+
+  <section class="spec">
+    <h2 class="ac-text-headline">Puzzle composition</h2>
+    <p class="ac-text-body">Grid, ClueBar and ClueLists wired together the intended way: the Grid's onSelect drives the bar and the active clue. Click a square, type, use the arrows, press Space to turn.</p>
+    <div class="panel"><div id="puzzle" class="puzzle"></div></div>
+  </section>
+
+  <section class="spec">
+    <h2 class="ac-text-headline">Cell states</h2>
+    <div class="panel"><div id="cells" class="ac-row" style="align-items:flex-start"></div></div>
+  </section>
+
+  <section class="spec">
+    <h2 class="ac-text-headline">Buttons</h2>
+    <div class="panel"><div id="buttons" class="ac-row"></div></div>
+  </section>
+
+  <section class="spec">
+    <h2 class="ac-text-headline">Color</h2>
+    <div class="panel"><div id="swatches" class="swatches"></div></div>
+  </section>
+</div>
+
+<script>
+  var A = window.Across, h = React.createElement;
+
+  /* theme toggle */
+  function ThemeToggle() {
+    var s = React.useState(document.documentElement.getAttribute('data-theme') || 'light');
+    var theme = s[0], setTheme = s[1];
+    React.useEffect(function () { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+    return h(A.Button, { variant: 'quiet', 'aria-pressed': theme === 'dark', onClick: function () { setTheme(theme === 'dark' ? 'light' : 'dark'); } },
+      theme === 'dark' ? 'Newsprint' : 'Night edition');
+  }
+  ReactDOM.createRoot(document.getElementById('theme')).render(h(ThemeToggle));
+
+  /* puzzle */
+  var solution = ['#CLUE', 'CHINA', 'LIMIT', 'UNITS', 'EATS#'];
+  var clues = {
+    across: { 1: 'Hint at the end of a line?', 5: 'Fine dinnerware', 6: 'Speed ___', 7: 'Apartments in a building', 8: 'Has dinner' },
+    down: { 1: 'Shop where a bull is famously unwelcome', 2: "The sky's, proverbially", 3: 'Meters and grams, e.g.', 4: 'Diner sign word', 5: "Detective's find" }
+  };
+  var toList = function (o) { return Object.keys(o).map(function (n) { return { number: +n, text: o[n] }; }); };
+  function Puzzle() {
+    var s = React.useState({ number: 1, direction: 'across' }), word = s[0], setWord = s[1];
+    return h(React.Fragment, null,
+      h('div', { className: 'left' },
+        h(A.ClueBar, { number: word.number, direction: word.direction }, clues[word.direction][word.number]),
+        h(A.Grid, { solution: solution, size: 'lg', label: 'Mini crossword', onSelect: setWord })),
+      h(A.ClueList, { direction: 'across', clues: toList(clues.across), activeNumber: word.direction === 'across' ? word.number : undefined }),
+      h(A.ClueList, { direction: 'down', clues: toList(clues.down), activeNumber: word.direction === 'down' ? word.number : undefined }));
+  }
+  ReactDOM.createRoot(document.getElementById('puzzle')).render(h(Puzzle));
+
+  /* cells */
+  var items = [
+    ['Empty', { number: 14 }], ['Pen', { number: 1, letter: 'C' }], ['Pencil', { letter: 'L', pencil: true }],
+    ['Active', { state: 'active', letter: 'I', number: 6 }], ['Word', { state: 'word', letter: 'M' }],
+    ['Wrong', { letter: 'Q', mark: 'wrong' }], ['Revealed', { letter: 'T', mark: 'revealed' }],
+    ['Circled', { letter: 'S', circled: true }], ['Block', { state: 'block' }]
+  ];
+  ReactDOM.createRoot(document.getElementById('cells')).render(h(React.Fragment, null, items.map(function (it) {
+    return h('div', { key: it[0], style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 } },
+      h(A.Cell, Object.assign({ size: 'lg' }, it[1])), h('span', { className: 'ac-caption' }, it[0]));
+  })));
+
+  /* buttons */
+  ReactDOM.createRoot(document.getElementById('buttons')).render(h(React.Fragment, null,
+    h(A.Button, { variant: 'primary' }, 'Check puzzle'), h(A.Button, null, 'Reveal word'),
+    h(A.Button, { variant: 'quiet' }, 'Pencil'), h(A.Button, { disabled: true }, 'Rebus')));
+
+  /* swatches: read live values so they follow the theme */
+  var names = ['paper', 'cell', 'ink', 'ink-muted', 'rule', 'grid-line', 'block', 'highlight', 'on-highlight', 'word', 'check', 'reveal', 'pencil', 'on-ink'];
+  function Swatches() {
+    var s = React.useState(0), bump = s[1];
+    React.useEffect(function () {
+      var mo = new MutationObserver(function () { bump(function (x) { return x + 1; }); });
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      return function () { mo.disconnect(); };
+    }, []);
+    var cs = getComputedStyle(document.documentElement);
+    return h(React.Fragment, null, names.map(function (n) {
+      return h('div', { key: n, className: 'sw' }, h('i', { style: { background: 'var(--' + n + ')' } }),
+        h('span', { className: 'ac-text-ui' }, n), h('code', null, cs.getPropertyValue('--' + n).trim()));
+    }));
+  }
+  ReactDOM.createRoot(document.getElementById('swatches')).render(h(Swatches));
+</script>
+</body>
+</html>
