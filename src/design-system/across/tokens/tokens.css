@@ -18,6 +18,7 @@
   --reveal: #1c5aa6;
   --pencil: #625f58;
   --on-ink: #f6f3ea;
+  --scrim: #17171799;
   --link: var(--reveal);
   --focus-ring: 0 0 0 2px #f6f3ea, 0 0 0 4px #1c5aa6;
 }
@@ -38,6 +39,7 @@
   --reveal: #8bbcf0;
   --pencil: #b3afa4;
   --on-ink: #171717;
+  --scrim: #000000b3;
   --link: var(--reveal);
   --focus-ring: 0 0 0 2px #121211, 0 0 0 4px #8bbcf0;
 }
@@ -60,6 +62,7 @@
     --reveal: #8bbcf0;
     --pencil: #b3afa4;
     --on-ink: #171717;
+    --scrim: #000000b3;
     --link: var(--reveal);
     --focus-ring: 0 0 0 2px #121211, 0 0 0 4px #8bbcf0;
   }

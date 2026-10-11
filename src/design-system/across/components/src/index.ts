@@ -7,3 +7,4 @@ export { ClueBar, type ClueBarProps } from './ClueBar';
 export { ClueList, type ClueListProps, type Clue } from './ClueList';
 export { numberGrid, wordAt, type Numbering, type Entry, type Direction } from './numberGrid';
 export { ConstructGrid, type ConstructGridProps, type ConstructMode } from './ConstructGrid';
+export { Dialog, type DialogProps } from './Dialog';

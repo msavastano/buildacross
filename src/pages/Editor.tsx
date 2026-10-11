@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ApiKeyDialog } from '../components/ApiKeyDialog';
 import { AppHeader } from '../components/AppHeader';
+import { SavingExplainerButton } from '../components/SavingExplainer';
 import { StatusIcon } from '../components/StatusIcon';
+import { useConfirm } from '../components/useConfirm';
 import { useMediaQuery } from '../components/useMediaQuery';
 import {
   Button, ClueBar, ConstructGrid, type CellSize, type ConstructMode, type Direction,
@@ -9,7 +12,8 @@ import {
 import {
   cluesMessage, explainChecks, fillMessage, INTRO, reviewClueStyle, type AssistantMessage, type Chip,
 } from '../lib/assistant';
-import { assistantAvailable, callAssistant } from '../lib/assistantApi';
+import { callAssistant, serverAvailable, type AssistantRoute } from '../lib/assistantApi';
+import { clearOwnKey, getOwnKey, setOwnKey } from '../lib/apiKey';
 import {
   buildContext, LIMITS, type AssistantRequest, type AssistantResponse, type HistoryItem,
 } from '../lib/assistantContext';
@@ -23,6 +27,12 @@ import { loadWordList, suggestFill } from '../lib/wordlist';
 import { NotFound } from './NotFound';
 
 type AssistantReply = Extract<AssistantResponse, { task: string }>;
+
+const CHECKS_HIDDEN = 'across.checksHidden';
+
+function readChecksHidden(): boolean {
+  try { return localStorage.getItem(CHECKS_HIDDEN) === '1'; } catch { return false; }
+}
 
 const toDirection = (d: Dir): Direction => (d === 'A' ? 'across' : 'down');
 const toDir = (d: Direction): Dir => (d === 'across' ? 'A' : 'D');
@@ -66,7 +76,11 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const [exportOpen, setExportOpen] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   /** null while checking whether the server has a Claude API key */
-  const [aiReady, setAiReady] = useState<boolean | null>(null);
+  const [serverKey, setServerKey] = useState<boolean | null>(null);
+  const [own, setOwn] = useState(getOwnKey);
+  const [keyOpen, setKeyOpen] = useState(false);
+  const [checksHidden, setChecksHidden] = useState(() => readChecksHidden());
+  const { dialog: confirmDialog, confirm } = useConfirm();
   const [busy, setBusy] = useState(false);
   const [question, setQuestion] = useState('');
   const logRef = useRef<HTMLDivElement>(null);
@@ -85,7 +99,7 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
 
   useEffect(() => {
     let live = true;
-    assistantAvailable().then((ok) => { if (live) setAiReady(ok); });
+    serverAvailable().then((ok) => { if (live) setServerKey(ok); });
     return () => { live = false; };
   }, []);
 
@@ -109,6 +123,20 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const counted = checks.filter((c) => c.status !== 'todo');
   const passing = counted.filter((c) => c.status === 'pass').length;
   const allDone = checks.every((c) => c.status === 'pass');
+  // The panel can only be minimized while nothing fails; a new problem opens it again.
+  const issues = checks.some((c) => c.status === 'fail' || c.status === 'warn');
+  const checksCollapsed = !issues && checksHidden;
+
+  function toggleChecks() {
+    const next = !checksCollapsed;
+    setChecksHidden(next);
+    if (next) setFlag(null);
+    try { localStorage.setItem(CHECKS_HIDDEN, next ? '1' : ''); } catch { /* ignore */ }
+  }
+
+  // Clue drafts and questions go through the server's key when it has one, else the constructor's own.
+  const route: AssistantRoute | null = serverKey ? { via: 'server' } : own.key ? { via: 'own', key: own.key } : null;
+  const aiReady = serverKey === null ? null : !!route;
 
   function selectWord(w: Word) {
     if (active && active.key === w.key) return;
@@ -169,7 +197,8 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   async function runRemote(req: AssistantRequest, onOk: (r: AssistantReply) => AssistantMessage) {
     setBusy(true);
     try {
-      const res = await callAssistant(req);
+      if (!route) return;
+      const res = await callAssistant(req, route);
       if ('error' in res) post(aiSay(res.error));
       else if ('refused' in res) post(aiSay(res.text));
       else post(onOk(res));
@@ -240,8 +269,13 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
     }
   }
 
-  function clearLetters() {
-    if (!window.confirm('Clear every letter? Black squares and clues stay.')) return;
+  async function clearLetters() {
+    const ok = await confirm({
+      title: 'Clear every letter?',
+      body: 'All letters in the grid are removed. Black squares and clues stay.',
+      confirmLabel: 'Clear letters',
+    });
+    if (!ok) return;
     update({ grid: g.map((v) => (v === '#' ? '#' : '')), pencil: [] });
   }
 
@@ -349,10 +383,13 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               ? `Click a square to make it black${mirror ? '; its partner mirrors at 180°.' : '.'} Arrows move, Space toggles.`
               : 'Type to fill. Space turns direction, Backspace clears, period places a black square.'}
           </p>
+          <p className="help">
+            Saved in this browser only. <SavingExplainerButton className="text-btn--inline" />
+          </p>
         </section>
 
         <section className="editor__side" aria-label="Checks and clues">
-          <div className="panel">
+          <div className={`panel${checksCollapsed ? ' panel--collapsed' : ''}`}>
             <div className="panel__head">
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <h2 className="panel__title">{p.nyt ? 'NYT checks' : 'Checks'}</h2>
@@ -360,40 +397,52 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
                   {allDone ? 'Ready to submit' : `${passing} of ${counted.length} rules pass`}
                 </span>
               </div>
-              <label className="check">
-                <input type="checkbox" checked={p.nyt} onChange={() => { update({ nyt: !p.nyt }); setFlag(null); }} />
-                NYT rules
-              </label>
+              <div className="panel__head-actions">
+                <label className="check">
+                  <input type="checkbox" checked={p.nyt} onChange={() => { update({ nyt: !p.nyt }); setFlag(null); }} />
+                  NYT rules
+                </label>
+                {!issues && (
+                  <Button className="small-btn checks-toggle" aria-expanded={!checksCollapsed} aria-controls="checks-body"
+                    onClick={toggleChecks}>
+                    {checksCollapsed ? 'Show checks' : 'Hide checks'}
+                  </Button>
+                )}
+              </div>
             </div>
-            {p.nyt && R === 15 && C === 15 && (
-              <div className="panel__sub">
-                <label htmlFor="ptype-select" style={{ fontSize: 13, fontWeight: 600 }}>Puzzle type</label>
-                <select id="ptype-select" className="select" value={p.ptype}
-                  onChange={(e) => update({ ptype: e.target.value === 'themeless' ? 'themeless' : 'themed' })}>
-                  <option value="themed">Themed · {NYT_RULES.maxWords.themed} words</option>
-                  <option value="themeless">Themeless · {NYT_RULES.maxWords.themeless} words</option>
-                </select>
+            {!checksCollapsed && (
+              <div id="checks-body">
+                {p.nyt && R === 15 && C === 15 && (
+                  <div className="panel__sub">
+                    <label htmlFor="ptype-select" style={{ fontSize: 13, fontWeight: 600 }}>Puzzle type</label>
+                    <select id="ptype-select" className="select" value={p.ptype}
+                      onChange={(e) => update({ ptype: e.target.value === 'themeless' ? 'themeless' : 'themed' })}>
+                      <option value="themed">Themed · {NYT_RULES.maxWords.themed} words</option>
+                      <option value="themeless">Themeless · {NYT_RULES.maxWords.themeless} words</option>
+                    </select>
+                  </div>
+                )}
+                <div>
+                  {checks.map((c) => {
+                    const showing = flag === c.id;
+                    return (
+                      <div key={c.id} className="check-row" data-showing={showing}>
+                        <StatusIcon status={c.status} />
+                        <span className="check-row__text">
+                          <span className={`check-row__label${c.status === 'fail' ? ' check-row__label--fail' : ''}`}>{c.label}</span>
+                          <span className="check-row__detail">{c.detail}</span>
+                        </span>
+                        {c.status !== 'pass' && c.cells.length > 0 && (
+                          <Button className="small-btn" aria-pressed={showing} onClick={() => setFlag(showing ? null : c.id)}>
+                            {showing ? 'Hide' : 'Show'}
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
-            <div>
-              {checks.map((c) => {
-                const showing = flag === c.id;
-                return (
-                  <div key={c.id} className="check-row" data-showing={showing}>
-                    <StatusIcon status={c.status} />
-                    <span className="check-row__text">
-                      <span className={`check-row__label${c.status === 'fail' ? ' check-row__label--fail' : ''}`}>{c.label}</span>
-                      <span className="check-row__detail">{c.detail}</span>
-                    </span>
-                    {c.status !== 'pass' && c.cells.length > 0 && (
-                      <Button className="small-btn" aria-pressed={showing} onClick={() => setFlag(showing ? null : c.id)}>
-                        {showing ? 'Hide' : 'Show'}
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
           <div className="panel">
@@ -472,18 +521,54 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
             <form className="assistant__ask" onSubmit={ask}>
               <label htmlFor="ask-input" className="ac-sr-only">Ask about this puzzle</label>
               <input id="ask-input" className="input" type="text" value={question} maxLength={LIMITS.question}
-                placeholder={aiReady === false ? 'Needs an API key on the server' : 'Ask about this puzzle'}
+                placeholder={aiReady === false ? 'Add an API key to ask questions' : 'Ask about this puzzle'}
                 disabled={!aiReady} onChange={(e) => setQuestion(e.target.value)} />
               <Button type="submit" disabled={!aiReady || busy || !question.trim()}>Ask</Button>
             </form>
-            {aiReady === false && (
-              <p className="assistant__note">
-                Clue drafts and questions need a Claude API key on the server. Suggest fill works without one.
-              </p>
+            {serverKey === false && (
+              <div className="assistant__note assistant__key">
+                {own.key ? (
+                  <>
+                    <span>
+                      Clue drafts and questions use your API key
+                      {own.remembered ? ', remembered on this browser.' : ' until you close this tab.'}
+                    </span>
+                    <button type="button" className="text-btn" onClick={() => setKeyOpen(true)}>Change key</button>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      Clue drafts and questions need a Claude API key. This site has none, so you can add your own.
+                      Suggest fill works without one.
+                    </span>
+                    <Button onClick={() => setKeyOpen(true)}>Add your API key</Button>
+                  </>
+                )}
+              </div>
             )}
           </aside>
         )}
       </main>
+      <ApiKeyDialog
+        open={keyOpen}
+        current={own.key}
+        remembered={own.remembered}
+        onClose={() => setKeyOpen(false)}
+        onSave={(key, remember) => {
+          // Even if the browser refuses to store it, the key works until the page closes.
+          setOwnKey(key, remember);
+          setOwn({ key, remembered: remember });
+          setKeyOpen(false);
+          post(aiSay('Your API key is set. Draft clues and questions now go from this browser to Anthropic.'));
+        }}
+        onRemove={() => {
+          clearOwnKey();
+          setOwn({ key: '', remembered: false });
+          setKeyOpen(false);
+          post(aiSay('Your API key is removed from this browser.'));
+        }}
+      />
+      {confirmDialog}
     </>
   );
 }
