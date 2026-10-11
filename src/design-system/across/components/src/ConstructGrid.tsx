@@ -18,9 +18,12 @@ export interface ConstructGridProps {
   mirror: boolean;
   /** flat indexes of squares to mark with the `wrong` slash (a failing check) */
   marks?: number[];
+  /** flat indexes of letters to show as pencil (suggestions not yet inked in) */
+  pencil?: number[];
   size?: CellSize;
   label?: string;
-  onChange: (grid: string[]) => void;
+  /** `changed` lists the squares written by this edit, even when a letter was retyped as itself */
+  onChange: (grid: string[], changed: number[]) => void;
   onCursorChange: (cursor: number, direction: Direction) => void;
   className?: string;
 }
@@ -43,13 +46,14 @@ function toSolution(grid: string[], rows: number, cols: number): string[] {
  * this component turns clicks and keys into onChange / onCursorChange calls.
  */
 export function ConstructGrid({
-  rows, cols, grid, cursor, direction, mode, mirror, marks = [], size = 'md',
+  rows, cols, grid, cursor, direction, mode, mirror, marks = [], pencil = [], size = 'md',
   label = 'Puzzle grid', onChange, onCursorChange, className,
 }: ConstructGridProps) {
   const shape = toSolution(grid, rows, cols).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const info = useMemo(() => numberGrid(shape.split('|')), [shape]);
   const marked = useMemo(() => new Set(marks), [marks]);
+  const penciled = useMemo(() => new Set(pencil), [pencil]);
 
   const r0 = Math.floor(cursor / cols);
   const c0 = cursor % cols;
@@ -69,8 +73,9 @@ export function ConstructGrid({
     const next = grid.slice();
     const v = next[i] === '#' ? '' : '#';
     next[i] = v;
-    if (mirror) next[rows * cols - 1 - i] = v;
-    onChange(next);
+    const changed = [i];
+    if (mirror) { next[rows * cols - 1 - i] = v; changed.push(rows * cols - 1 - i); }
+    onChange(next, changed);
   }
 
   /** one square along the direction, or null at an edge or a black square */
@@ -110,7 +115,7 @@ export function ConstructGrid({
       if (onBlock) return;
       const next = grid.slice();
       next[cursor] = k.toUpperCase();
-      onChange(next);
+      onChange(next, [cursor]);
       const n = step(cursor, 1);
       if (n !== null) onCursorChange(n, dir);
       return;
@@ -119,18 +124,18 @@ export function ConstructGrid({
       e.preventDefault();
       if (onBlock) return;
       if (grid[cursor]) {
-        const next = grid.slice(); next[cursor] = ''; onChange(next);
+        const next = grid.slice(); next[cursor] = ''; onChange(next, [cursor]);
         return;
       }
       const p = step(cursor, -1);
       if (p === null) return;
-      if (grid[p]) { const next = grid.slice(); next[p] = ''; onChange(next); }
+      if (grid[p]) { const next = grid.slice(); next[p] = ''; onChange(next, [p]); }
       onCursorChange(p, dir);
       return;
     }
     if (k === 'Delete') {
       e.preventDefault();
-      if (!onBlock && grid[cursor]) { const next = grid.slice(); next[cursor] = ''; onChange(next); }
+      if (!onBlock && grid[cursor]) { const next = grid.slice(); next[cursor] = ''; onChange(next, [cursor]); }
     }
   }
 
@@ -160,6 +165,7 @@ export function ConstructGrid({
           inGrid
           state={isCur ? 'active' : inWord(r, c) ? 'word' : 'empty'}
           letter={v}
+          pencil={!!v && penciled.has(i)}
           number={info.numbers[r][c] || undefined}
           mark={marked.has(i) ? 'wrong' : undefined}
           onClick={() => click(i)}

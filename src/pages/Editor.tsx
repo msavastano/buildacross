@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
 import { StatusIcon } from '../components/StatusIcon';
@@ -6,14 +6,23 @@ import { useMediaQuery } from '../components/useMediaQuery';
 import {
   Button, ClueBar, ConstructGrid, type CellSize, type ConstructMode, type Direction,
 } from '../design-system/across/components/src';
-import { explainChecks, INTRO, reviewClueStyle, type AssistantMessage, type Chip } from '../lib/assistant';
+import {
+  cluesMessage, explainChecks, fillMessage, INTRO, reviewClueStyle, type AssistantMessage, type Chip,
+} from '../lib/assistant';
+import { assistantAvailable, callAssistant } from '../lib/assistantApi';
+import {
+  buildContext, LIMITS, type AssistantRequest, type AssistantResponse, type HistoryItem,
+} from '../lib/assistantContext';
 import { allWords, analyze, findActive, wordChip, wordLabel, wordText, type Dir, type Word } from '../lib/grid';
 import { canExportPuz, exportPuz, puzFileName } from '../lib/puz';
 import { puzzleTypeName, type Puzzle } from '../lib/puzzle';
 import { NYT_RULES } from '../lib/rules';
 import { loadPuzzle, savePuzzle } from '../lib/storage';
 import { validate, type CheckId } from '../lib/validate';
+import { loadWordList, suggestFill } from '../lib/wordlist';
 import { NotFound } from './NotFound';
+
+type AssistantReply = Extract<AssistantResponse, { task: string }>;
 
 const toDirection = (d: Dir): Direction => (d === 'A' ? 'across' : 'down');
 const toDir = (d: Direction): Dir => (d === 'across' ? 'A' : 'D');
@@ -56,6 +65,10 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const [aiMsgs, setAiMsgs] = useState<AssistantMessage[]>([INTRO]);
   const [exportOpen, setExportOpen] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
+  /** null while checking whether the server has a Claude API key */
+  const [aiReady, setAiReady] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [question, setQuestion] = useState('');
   const logRef = useRef<HTMLDivElement>(null);
   const narrow = useMediaQuery('(max-width: 720px)');
 
@@ -68,7 +81,13 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [aiMsgs]);
+  }, [aiMsgs, busy]);
+
+  useEffect(() => {
+    let live = true;
+    assistantAvailable().then((ok) => { if (live) setAiReady(ok); });
+    return () => { live = false; };
+  }, []);
 
   const update = (ch: Partial<Puzzle>) => setPuzzle({ ...p, ...ch, updatedAt: Date.now() });
 
@@ -81,6 +100,8 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const flagged = checks.find((c) => c.id === flag && c.status !== 'pass');
   const marks = flagged ? flagged.cells : [];
   const mirror = p.mirror || p.nyt;
+  const pencil = useMemo(() => p.pencil ?? [], [p.pencil]);
+  const pencilSet = useMemo(() => new Set(pencil), [pencil]);
 
   const maxDim = Math.max(R, C);
   const size: CellSize = maxDim <= 7 ? 'lg' : maxDim <= 15 && !narrow ? 'md' : 'sm';
@@ -106,20 +127,122 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
     setTab(nx.dir);
   }
 
-  function say(userText: string, reply: AssistantMessage) {
-    setAiMsgs((msgs) => [...msgs, { role: 'you' as const, text: userText }, reply].slice(-14));
+  function post(...msgs: AssistantMessage[]) {
+    setAiMsgs((prev) => [...prev, ...msgs].slice(-14));
     setAiOpen(true);
+  }
+
+  function say(userText: string, reply: AssistantMessage) {
+    post({ role: 'you', text: userText }, reply);
+  }
+
+  const aiSay = (text: string): AssistantMessage => ({ role: 'ai', text });
+
+  function focusWord(w: Word) {
+    setCursor(w.cells[0]);
+    setDir(w.dir);
+    setTab(w.dir);
+  }
+
+  function editGrid(grid: string[], changed: number[]) {
+    // Any square the constructor writes stops being a suggestion.
+    const gone = new Set(changed);
+    update({ grid, pencil: pencil.filter((i) => !gone.has(i)) });
+  }
+
+  async function suggest() {
+    if (!active) { say('Suggest fill', aiSay('Select an entry first.')); return; }
+    const w = active;
+    // Pencil letters are suggestions, so look past them.
+    const base = g.map((v, i) => (pencilSet.has(i) ? '' : v));
+    post({ role: 'you', text: `Suggest fill for ${wordLabel(w)}` });
+    setBusy(true);
+    try {
+      post(fillMessage(w, suggestFill(await loadWordList(), base, m, w)));
+    } catch {
+      post(aiSay('The word list did not load. Check your connection and try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runRemote(req: AssistantRequest, onOk: (r: AssistantReply) => AssistantMessage) {
+    setBusy(true);
+    try {
+      const res = await callAssistant(req);
+      if ('error' in res) post(aiSay(res.error));
+      else if ('refused' in res) post(aiSay(res.text));
+      else post(onOk(res));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function draftClues() {
+    if (!active) { say('Draft clues', aiSay('Select an entry first.')); return; }
+    const w = active;
+    const answer = wordText(g, w);
+    if (answer.includes('?')) {
+      say(`Draft clues for ${wordLabel(w)}`, aiSay(`Fill every square of ${wordLabel(w)} first. I draft clues for complete answers.`));
+      return;
+    }
+    post({ role: 'you', text: `Draft clues for ${wordLabel(w)}` });
+    runRemote({ task: 'clues', context: context() }, (r) =>
+      r.task === 'clues' ? cluesMessage(w, answer, r.clues) : aiSay('The assistant answered something else. Try again.'));
+  }
+
+  function ask(e: FormEvent) {
+    e.preventDefault();
+    const q = question.trim().slice(0, LIMITS.question);
+    if (!q || busy) return;
+    const history: HistoryItem[] = aiMsgs.filter((x) => x !== INTRO).slice(-LIMITS.historyItems)
+      .map((x) => ({ role: x.role, text: x.text.slice(0, LIMITS.historyText) }));
+    post({ role: 'you', text: q });
+    setQuestion('');
+    runRemote({ task: 'ask', context: context(), question: q, history }, (r) =>
+      aiSay(r.task === 'ask' ? r.text : 'The assistant answered something else. Try again.'));
+  }
+
+  function context() {
+    return buildContext(p, puzzleTypeName(p), m, active, checks);
+  }
+
+  function place(key: string, word: string) {
+    const w = allWords(m).find((x) => x.key === key);
+    const clash = !w || w.cells.length !== word.length
+      || w.cells.some((cell, k) => g[cell] && !pencilSet.has(cell) && g[cell] !== word[k]);
+    if (!w || clash) { post(aiSay(`${word} no longer fits there. Ask for new suggestions.`)); return; }
+    const next = g.slice();
+    const pen = new Set(pencilSet);
+    w.cells.forEach((cell, k) => {
+      if (!g[cell] || pencilSet.has(cell)) { next[cell] = word[k]; pen.add(cell); }
+    });
+    update({ grid: next, pencil: [...pen] });
+    focusWord(w);
+    post({
+      role: 'ai',
+      text: `Placed ${word} at ${wordLabel(w)} in pencil. Type over a letter to change it, or ink the word in.`,
+      chips: [{ kind: 'ink', key: w.key, label: `Ink in ${word}` }],
+    });
   }
 
   function applyChip(c: Chip) {
     if (c.kind === 'flag') { setFlag(c.id); return; }
+    if (c.kind === 'place') { place(c.key, c.word); return; }
     const w = allWords(m).find((x) => x.key === c.key);
-    if (w) { setCursor(w.cells[0]); setDir(w.dir); setTab(w.dir); }
+    if (!w) { post(aiSay('That entry is no longer in the grid.')); return; }
+    focusWord(w);
+    if (c.kind === 'ink') {
+      const cells = new Set(w.cells);
+      update({ pencil: pencil.filter((i) => !cells.has(i)) });
+    } else if (c.kind === 'clue') {
+      update({ clues: { ...p.clues, [w.key]: c.text } });
+    }
   }
 
   function clearLetters() {
     if (!window.confirm('Clear every letter? Black squares and clues stay.')) return;
-    update({ grid: g.map((v) => (v === '#' ? '#' : '')) });
+    update({ grid: g.map((v) => (v === '#' ? '#' : '')), pencil: [] });
   }
 
   const puzOk = canExportPuz(p);
@@ -154,6 +277,11 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
             Download backup (.json)
           </Button>
           {!puzOk.ok && <span className="muted" style={{ fontSize: 14 }}>{puzOk.reason}</span>}
+          {puzOk.ok && pencil.length > 0 && (
+            <span className="muted" style={{ fontSize: 14 }}>
+              {pencil.length} {pencil.length === 1 ? 'square is' : 'squares are'} still in pencil. They export as regular letters.
+            </span>
+          )}
           <button type="button" className="text-btn" style={{ marginLeft: 'auto' }} onClick={() => setExportOpen(false)}>Close</button>
         </section>
       )}
@@ -176,7 +304,12 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               <input type="checkbox" checked={mirror} disabled={p.nyt} onChange={() => update({ mirror: !p.mirror })} />
               Mirror black squares
             </label>
-            <button type="button" className="text-btn push" onClick={clearLetters}>Clear letters</button>
+            {pencil.length > 0 && (
+              <button type="button" className="text-btn push" onClick={() => update({ pencil: [] })}>
+                Ink in pencil letters ({pencil.length})
+              </button>
+            )}
+            <button type="button" className={`text-btn${pencil.length ? '' : ' push'}`} onClick={clearLetters}>Clear letters</button>
           </div>
 
           {active ? (
@@ -200,8 +333,9 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               mode={mode}
               mirror={mirror}
               marks={marks}
+              pencil={pencil}
               size={size}
-              onChange={(grid) => update({ grid })}
+              onChange={editGrid}
               onCursorChange={(c, d) => {
                 setCursor(c);
                 setDir(toDir(d));
@@ -306,6 +440,8 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
                 {active ? `Working on ${wordLabel(active)} · ${wordText(g, active)}` : 'No entry selected'}
               </span>
               <div className="assistant__grid">
+                <Button disabled={busy} onClick={suggest}>Suggest fill</Button>
+                <Button disabled={busy || !aiReady} onClick={draftClues}>Draft clues</Button>
                 <Button onClick={() => say('Explain checks', explainChecks(checks))}>Explain checks</Button>
                 <Button onClick={() => say('Review clue style', reviewClueStyle(g, m, p.clues))}>Review clue style</Button>
               </div>
@@ -326,8 +462,25 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
                   </div>
                 </div>
               ))}
+              {busy && (
+                <div className="msg">
+                  <span className="msg__who">ASSISTANT</span>
+                  <div className="msg__body"><span className="msg__text muted">Working on it.</span></div>
+                </div>
+              )}
             </div>
-            <p className="assistant__note">Fill suggestions, clue drafts and questions are not available yet.</p>
+            <form className="assistant__ask" onSubmit={ask}>
+              <label htmlFor="ask-input" className="ac-sr-only">Ask about this puzzle</label>
+              <input id="ask-input" className="input" type="text" value={question} maxLength={LIMITS.question}
+                placeholder={aiReady === false ? 'Needs an API key on the server' : 'Ask about this puzzle'}
+                disabled={!aiReady} onChange={(e) => setQuestion(e.target.value)} />
+              <Button type="submit" disabled={!aiReady || busy || !question.trim()}>Ask</Button>
+            </form>
+            {aiReady === false && (
+              <p className="assistant__note">
+                Clue drafts and questions need a Claude API key on the server. Suggest fill works without one.
+              </p>
+            )}
           </aside>
         )}
       </main>

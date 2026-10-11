@@ -4,7 +4,9 @@ Crossword construction web app. Vite + React 18 + TypeScript, react-router, plai
 
 - `npm run dev` · `npm test` · `npm run typecheck` · `npm run build`
 - Routes: `/` landing, `/new` setup, `/puzzles` saved puzzles, `/puzzle/:id` editor, `/puzzle/:id/settings`, `/puzzle/:id/print`.
-- Pure logic lives in `src/lib` (`grid.ts` analyze/numbering, `validate.ts` checks, `puz.ts` Across Lite export, `storage.ts` localStorage). Keep it UI-free and tested.
+- Pure logic lives in `src/lib` (`grid.ts` analyze/numbering, `validate.ts` checks, `puz.ts` Across Lite export, `storage.ts` localStorage, `wordlist.ts` fill matching, `assistantContext.ts` what the assistant sees). Keep it UI-free and tested.
+- The assistant route is `server/assistant.ts` (prompts in `server/prompts.ts`), served by `api/assistant.ts` on Vercel and by the Vite plugin in dev. `ANTHROPIC_API_KEY` stays server-side; never read it in `src/`.
+- Assistant-placed letters are pencil (`Puzzle.pencil`) until the constructor types over them or inks them in.
 - Submission rules live only in `src/lib/rules.ts`, with their source link.
 - The original design handoff (prototype `.dc.html` files) is in `docs/handoff/`; the design system is in `src/design-system/across/`.
 

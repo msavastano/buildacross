@@ -1,13 +1,21 @@
 /**
- * Assistant tasks that run locally, ported from the Builder prototype.
- * Fill suggestions and clue drafting need the server route and a word list; they come next.
+ * Assistant messages. Explain checks, Review clue style and Suggest fill run in the browser;
+ * clue drafts and questions go to the server route (src/lib/assistantApi.ts).
  */
-import { allWords, wordChip, wordLabel, wordText, type Analysis } from './grid';
+import type { CluesResult } from './assistantContext';
+import { allWords, wordChip, wordLabel, wordText, type Analysis, type Word } from './grid';
 import type { Check, CheckId } from './validate';
+import type { FillSuggestions } from './wordlist';
 
 export type Chip =
   | { kind: 'flag'; id: CheckId; label: string }
-  | { kind: 'goto'; key: string; label: string };
+  | { kind: 'goto'; key: string; label: string }
+  /** write the word into the entry's squares as pencil */
+  | { kind: 'place'; key: string; word: string; label: string }
+  /** turn the entry's pencil letters into pen */
+  | { kind: 'ink'; key: string; label: string }
+  /** set the entry's clue */
+  | { kind: 'clue'; key: string; text: string; label: string };
 
 export interface AssistantMessage {
   role: 'ai' | 'you';
@@ -17,7 +25,7 @@ export interface AssistantMessage {
 
 export const INTRO: AssistantMessage = {
   role: 'ai',
-  text: 'Select an entry, then pick a task. I can see your crossings and which checks fail.',
+  text: 'Select an entry, then pick a task or ask a question. I can see your crossings and which checks fail.',
 };
 
 export function explainChecks(checks: Check[]): AssistantMessage {
@@ -69,5 +77,39 @@ export function reviewClueStyle(g: string[], m: Analysis, clues: Record<string, 
     role: 'ai',
     text: notes.length ? `${head}\n\n${notes.slice(0, 6).join('\n')}` : `${head} No style problems found.`,
     chips: chips.slice(0, 6),
+  };
+}
+
+const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
+
+export function fillMessage(w: Word, s: FillSuggestions): AssistantMessage {
+  const label = wordLabel(w);
+  if (s.full) {
+    return { role: 'ai', text: `${label} is full: ${s.pattern}. Clear the letters you want to change, then ask again.` };
+  }
+  if (!s.matches) {
+    return { role: 'ai', text: `No word in the list fits ${label}, ${s.pattern}. Try changing a crossing or moving a black square.` };
+  }
+  if (!s.viable.length) {
+    return {
+      role: 'ai',
+      text: `${plural(s.matches, 'word fits', 'words fit')} ${label}, ${s.pattern}, but each one leaves a crossing with no answer in the list. Try changing a crossing.`,
+    };
+  }
+  return {
+    role: 'ai',
+    text: `${plural(s.matches, 'word fits', 'words fit')} ${label}, ${s.pattern}. Here are the best scored that keep every crossing workable. A placed word goes in as pencil.`,
+    chips: s.viable.map((v) => ({ kind: 'place', key: w.key, word: v.word, label: v.word })),
+  };
+}
+
+export function cluesMessage(w: Word, answer: string, c: CluesResult): AssistantMessage {
+  return {
+    role: 'ai',
+    text: `Two drafts for ${wordLabel(w)}, ${answer}.\n\nEasy: ${c.easy}\nTricky: ${c.tricky}`,
+    chips: [
+      { kind: 'clue', key: w.key, text: c.easy, label: 'Use easy' },
+      { kind: 'clue', key: w.key, text: c.tricky, label: 'Use tricky' },
+    ],
   };
 }

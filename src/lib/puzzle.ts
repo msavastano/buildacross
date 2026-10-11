@@ -13,6 +13,8 @@ export interface Puzzle {
   grid: string[];
   /** keyed by Word.key ("r-c-A") so clues survive renumbering */
   clues: Record<string, string>;
+  /** squares whose letters the assistant placed and the constructor has not inked in yet */
+  pencil?: number[];
   nyt: boolean;
   ptype: PuzzleType;
   /** mirror black squares at 180°; always on while NYT rules are on */
