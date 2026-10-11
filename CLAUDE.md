@@ -7,6 +7,8 @@ Crossword construction web app. Vite + React 18 + TypeScript, react-router, plai
 - Pure logic lives in `src/lib` (`grid.ts` analyze/numbering, `validate.ts` checks, `puz.ts` Across Lite export, `storage.ts` localStorage, `wordlist.ts` fill matching, `assistantContext.ts` what the assistant sees). Keep it UI-free and tested.
 - The assistant's Claude call is `src/lib/claude.ts` (prompts in `src/lib/assistantPrompts.ts`). The server route `server/assistant.ts` runs it with `ANTHROPIC_API_KEY`, served by `api/assistant.ts` on Vercel and by the Vite plugin in dev; that key stays server-side, never read it in `src/`. When the server has no key, the constructor can add their own (`src/lib/apiKey.ts`); it is used from the browser straight to Anthropic and never sent to our server.
 - Use the `Dialog` component (or `useConfirm`) instead of `window.alert` / `confirm` / `prompt`.
+- Clues are stored with `<i>`/`<b>` and `&amp; &lt; &gt;` (`src/lib/clueFormat.ts`). Render with `ClueText`, edit with `ClueInput`, and use `clueToPlain` for checks, the assistant and `.puz`.
+- A grid square can hold a rebus (several characters). `wordText` expands it; `.puz` export writes GRBS/RTBL sections.
 - Assistant-placed letters are pencil (`Puzzle.pencil`) until the constructor types over them or inks them in.
 - Submission rules live only in `src/lib/rules.ts`, with their source link.
 - The original design handoff (prototype `.dc.html` files) is in `docs/handoff/`; the design system is in `src/design-system/across/`.

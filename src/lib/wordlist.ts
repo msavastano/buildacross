@@ -88,6 +88,8 @@ export interface FillSuggestions {
   viable: { word: string; score: number }[];
   /** true when the entry has no empty squares */
   full: boolean;
+  /** true when the entry has a rebus square; the list only covers one letter per square */
+  rebus: boolean;
 }
 
 /**
@@ -98,6 +100,7 @@ export interface FillSuggestions {
 export function suggestFill(list: WordList, g: string[], m: Analysis, w: Word, limit = 8): FillSuggestions {
   const pattern = wordText(g, w);
   const full = !pattern.includes('?');
+  if (pattern.length !== w.cells.length) return { pattern, matches: 0, viable: [], full, rebus: true };
   const inGrid = new Set<string>();
   for (const x of [...m.across, ...m.down]) {
     if (x.key === w.key) continue;
@@ -112,7 +115,7 @@ export function suggestFill(list: WordList, g: string[], m: Analysis, w: Word, l
     const x = crossers.find((c) => c.cells.includes(cell));
     if (!x) return null;
     const xp = wordText(g, x);
-    if (xp.length < 3) return null;
+    if (xp.length < 3 || xp.length !== x.cells.length) return null; // too short, or crosses at a rebus
     return lettersAt(list, xp, x.cells.indexOf(cell));
   });
 
@@ -124,5 +127,5 @@ export function suggestFill(list: WordList, g: string[], m: Analysis, w: Word, l
     if (viable.length >= limit || inGrid.has(word) || word === pattern) continue;
     if (allowed.every((s, k) => !s || s.has(word[k]))) viable.push({ word, score: list.scores.get(word) ?? 0 });
   }
-  return { pattern, matches, viable, full };
+  return { pattern, matches, viable, full, rebus: false };
 }

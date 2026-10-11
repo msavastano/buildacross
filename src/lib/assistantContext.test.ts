@@ -15,6 +15,18 @@ describe('buildContext', () => {
   });
 });
 
+describe('rebus squares', () => {
+  it('marks them in the grid and lists them', () => {
+    const rg = ['STAR', 'A', 'T', '', '', '', '', '', ''];
+    const rm = analyze(rg, 3, 3);
+    const c = buildContext({ ...p, grid: rg }, 'Mini', rm, rm.across[0], []);
+    expect(c.grid[0]).toBe('*AT');
+    expect(c.rebus).toEqual(['Row 1, column 1: STAR']);
+    expect(c.entries[0].pattern).toBe('STARAT');
+    expect(parseAssistantRequest({ task: 'clues', context: c })).toMatchObject({ task: 'clues' });
+  });
+});
+
 describe('parseAssistantRequest', () => {
   const context = buildContext(p, 'Mini', m, m.across[0], []);
 

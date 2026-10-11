@@ -1,3 +1,4 @@
+import { clueToPlain } from './clueFormat';
 import { allWords, wordText, type Analysis } from './grid';
 import { NYT_RULES, isNytSize, maxWordsFor, type PuzzleType } from './rules';
 
@@ -85,7 +86,7 @@ export function validate(s: ValidateInput, m: Analysis): Check[] {
   for (let i = 0; i < total; i++) if (g[i] && g[i] !== '#') filled++;
   ck('filled', 'Every square filled', filled === m.open ? 'pass' : 'todo', `${filled} of ${m.open} squares`);
 
-  const clued = words.filter((w) => (s.clues[w.key] || '').trim()).length;
+  const clued = words.filter((w) => clueToPlain(s.clues[w.key] || '').trim()).length;
   ck('clued', 'Every answer clued', clued === words.length && words.length ? 'pass' : 'todo', `${clued} of ${words.length} clues`);
 
   return out;

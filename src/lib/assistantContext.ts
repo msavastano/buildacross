@@ -2,6 +2,7 @@
  * What the browser sends to the assistant route, and the checks the server runs on it.
  * Shared by the editor (src/pages/Editor.tsx) and the server (server/assistant.ts).
  */
+import { clueToPlain } from './clueFormat';
 import { allWords, wordChip, wordLabel, wordText, type Analysis, type Word } from './grid';
 import type { Check } from './validate';
 
@@ -19,8 +20,10 @@ export interface PuzzleContext {
   title: string;
   rows: number;
   cols: number;
-  /** one string per row: '#' black, '.' empty, A–Z letter */
+  /** one string per row: '#' black, '.' empty, A–Z letter, '*' rebus square */
   grid: string[];
+  /** rebus squares, "Row 3, column 5: STAR" */
+  rebus: string[];
   nyt: boolean;
   puzzleType: string;
   entries: EntryContext[];
@@ -54,10 +57,12 @@ export const LIMITS = {
   historyItems: 8,
   historyText: 2000,
   failing: 20,
+  rebus: 100,
+  pattern: 200,
 } as const;
 
 function entry(g: string[], w: Word, clues: Record<string, string>): EntryContext {
-  return { chip: wordChip(w), label: wordLabel(w), pattern: wordText(g, w), clue: (clues[w.key] || '').trim().slice(0, LIMITS.clue) };
+  return { chip: wordChip(w), label: wordLabel(w), pattern: wordText(g, w), clue: clueToPlain(clues[w.key] || '').trim().slice(0, LIMITS.clue) };
 }
 
 export function buildContext(
@@ -69,9 +74,13 @@ export function buildContext(
 ): PuzzleContext {
   const { rows, cols, grid: g, clues } = p;
   const lines: string[] = [];
+  const rebus: string[] = [];
   for (let r = 0; r < rows; r++) {
-    lines.push(g.slice(r * cols, (r + 1) * cols).map((v) => v || '.').join(''));
+    lines.push(g.slice(r * cols, (r + 1) * cols).map((v) => (v.length > 1 ? '*' : v || '.')).join(''));
   }
+  g.forEach((v, i) => {
+    if (v.length > 1 && v !== '#') rebus.push(`Row ${Math.floor(i / cols) + 1}, column ${(i % cols) + 1}: ${v}`);
+  });
   let act: PuzzleContext['active'] = null;
   if (active) {
     const crossers = active.dir === 'A' ? m.down : m.across;
@@ -86,6 +95,7 @@ export function buildContext(
     rows,
     cols,
     grid: lines,
+    rebus: rebus.slice(0, LIMITS.rebus),
     nyt: p.nyt,
     puzzleType,
     entries: allWords(m).map((w) => entry(g, w, clues)),
@@ -103,11 +113,11 @@ const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object
 const str = (x: unknown, max: number): x is string => typeof x === 'string' && x.length <= max;
 const CHIP = /^\d{1,3}[AD]$/;
 const LABEL = /^\d{1,3} (Across|Down)$/;
-const PATTERN = /^[A-Z?]{1,25}$/;
+const PATTERN = /^[A-Z0-9?]{1,200}$/;
 
 function isEntry(x: unknown): x is EntryContext {
   return isObj(x) && str(x.chip, 4) && CHIP.test(x.chip) && str(x.label, 10) && LABEL.test(x.label)
-    && str(x.pattern, 25) && PATTERN.test(x.pattern) && str(x.clue, LIMITS.clue);
+    && str(x.pattern, LIMITS.pattern) && PATTERN.test(x.pattern) && str(x.clue, LIMITS.clue);
 }
 
 function contextError(c: unknown): string | null {
@@ -117,7 +127,8 @@ function contextError(c: unknown): string | null {
     || rows < 1 || cols < 1 || rows > LIMITS.maxDim || cols > LIMITS.maxDim) return 'grid size is out of range';
   if (!str(c.title, LIMITS.title) || !str(c.puzzleType, 40) || typeof c.nyt !== 'boolean') return 'puzzle details are malformed';
   if (!Array.isArray(c.grid) || c.grid.length !== rows
-    || !c.grid.every((row) => typeof row === 'string' && row.length === cols && /^[A-Z.#]+$/.test(row))) return 'grid is malformed';
+    || !c.grid.every((row) => typeof row === 'string' && row.length === cols && /^[A-Z0-9.#*]+$/.test(row))) return 'grid is malformed';
+  if (!Array.isArray(c.rebus) || c.rebus.length > LIMITS.rebus || !c.rebus.every((x) => str(x, 60))) return 'rebus squares are malformed';
   if (!Array.isArray(c.entries) || c.entries.length > 2 * rows * cols || !c.entries.every(isEntry)) return 'entries are malformed';
   if (c.active !== null) {
     const a = c.active;

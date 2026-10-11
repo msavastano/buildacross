@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiKeyDialog } from '../components/ApiKeyDialog';
+import { applyFormat, ClueInput } from '../components/ClueInput';
+import { ClueText } from '../components/ClueText';
+import { RebusDialog } from '../components/RebusDialog';
 import { AppHeader } from '../components/AppHeader';
 import { SavingExplainerButton } from '../components/SavingExplainer';
 import { StatusIcon } from '../components/StatusIcon';
@@ -24,11 +27,13 @@ import { NYT_RULES } from '../lib/rules';
 import { loadPuzzle, savePuzzle } from '../lib/storage';
 import { validate, type CheckId } from '../lib/validate';
 import { loadWordList, suggestFill } from '../lib/wordlist';
+import { serializeClue } from '../lib/clueFormat';
 import { NotFound } from './NotFound';
 
 type AssistantReply = Extract<AssistantResponse, { task: string }>;
 
 const CHECKS_HIDDEN = 'across.checksHidden';
+const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
 
 function readChecksHidden(): boolean {
   try { return localStorage.getItem(CHECKS_HIDDEN) === '1'; } catch { return false; }
@@ -80,6 +85,9 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const [own, setOwn] = useState(getOwnKey);
   const [keyOpen, setKeyOpen] = useState(false);
   const [checksHidden, setChecksHidden] = useState(() => readChecksHidden());
+  /** the square whose rebus is being edited */
+  const [rebusAt, setRebusAt] = useState<number | null>(null);
+  const clueBoxRef = useRef<HTMLDivElement>(null);
   const { dialog: confirmDialog, confirm } = useConfirm();
   const [busy, setBusy] = useState(false);
   const [question, setQuestion] = useState('');
@@ -265,7 +273,7 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
       const cells = new Set(w.cells);
       update({ pencil: pencil.filter((i) => !cells.has(i)) });
     } else if (c.kind === 'clue') {
-      update({ clues: { ...p.clues, [w.key]: c.text } });
+      update({ clues: { ...p.clues, [w.key]: serializeClue([{ text: c.text, i: false, b: false }]) } });
     }
   }
 
@@ -283,6 +291,24 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
   const meta = `${R} × ${C} · ${puzzleTypeName(p)} · ${p.nyt ? 'NYT rules on' : 'NYT rules off'}${p.author ? ` · by ${p.author}` : ''}`;
   const list = tab === 'D' ? m.down : m.across;
   const activeClue = active ? (p.clues[active.key] || '') : '';
+
+  // Keep the selected entry's clue field in view in the clue list, without moving the page.
+  const activeKey = active?.key;
+  useEffect(() => {
+    const box = clueBoxRef.current;
+    const row = activeKey ? box?.querySelector<HTMLElement>(`[data-key="${activeKey}"]`) : null;
+    if (!box || !row) return;
+    const top = row.offsetTop;
+    const bottom = top + row.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  }, [activeKey, tab]);
+
+  /** Italic and Bold buttons act on the clue field that has focus. */
+  function formatClue(cmd: 'italic' | 'bold') {
+    const el = document.activeElement;
+    if (el instanceof HTMLElement && el.classList.contains('clue-input')) applyFormat(cmd);
+  }
 
   return (
     <>
@@ -344,12 +370,15 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               </button>
             )}
             <button type="button" className={`text-btn${pencil.length ? '' : ' push'}`} onClick={clearLetters}>Clear letters</button>
+            <Button className="small-btn" disabled={mode !== 'letters' || g[cursor] === '#'} onClick={() => setRebusAt(cursor)}>
+              Rebus
+            </Button>
           </div>
 
           {active ? (
             <ClueBar number={active.num} direction={toDirection(active.dir)} onPrev={() => stepClue(-1)} onNext={() => stepClue(1)}
               className={activeClue ? undefined : 'cluebar-empty'}>
-              {activeClue || 'No clue yet. Write one in the list.'}
+              {activeClue ? <ClueText clue={activeClue} /> : 'No clue yet. Write one in the list.'}
             </ClueBar>
           ) : (
             <div className="ac-cluebar cluebar-empty">
@@ -370,6 +399,7 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               pencil={pencil}
               size={size}
               onChange={editGrid}
+              onRebus={setRebusAt}
               onCursorChange={(c, d) => {
                 setCursor(c);
                 setDir(toDir(d));
@@ -381,7 +411,7 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
           <p className="help">
             {mode === 'blocks'
               ? `Click a square to make it black${mirror ? '; its partner mirrors at 180°.' : '.'} Arrows move, Space toggles.`
-              : 'Type to fill. Space turns direction, Backspace clears, period places a black square.'}
+              : 'Type to fill. Space turns direction, Backspace clears, period places a black square, Insert or Esc adds a rebus.'}
           </p>
           <p className="help">
             Saved in this browser only. <SavingExplainerButton className="text-btn--inline" />
@@ -450,26 +480,29 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
               <button type="button" aria-pressed={tab === 'A'} onClick={() => setTab('A')}>ACROSS · {m.across.length}</button>
               <button type="button" aria-pressed={tab === 'D'} onClick={() => setTab('D')}>DOWN · {m.down.length}</button>
             </div>
-            <div className="clue-rows">
+            <div className="clue-tools" role="group" aria-label="Clue formatting">
+              <Button className="fmt-italic" onMouseDown={(e) => e.preventDefault()} onClick={() => formatClue('italic')}>Italic</Button>
+              <Button className="fmt-bold" onMouseDown={(e) => e.preventDefault()} onClick={() => formatClue('bold')}>Bold</Button>
+              <span className="help">Select words in a clue, then {MOD}+I or {MOD}+B.</span>
+            </div>
+            <div className="clue-rows" ref={clueBoxRef}>
               {list.length === 0 && <p className="clue-empty">No {tab === 'A' ? 'Across' : 'Down'} entries yet.</p>}
               {list.map((w) => {
                 const isAct = !!active && active.key === w.key;
                 const dirWord = w.dir === 'A' ? 'Across' : 'Down';
                 return (
-                  <div key={w.key} className="clue-row" data-active={isAct}>
+                  <div key={w.key} className="clue-row" data-active={isAct} data-key={w.key}>
                     <button type="button" className="clue-row__head" aria-label={`Select ${w.num} ${dirWord}`} onClick={() => selectWord(w)}>
                       <span className="clue-row__num">{wordChip(w)}</span>
-                      <span className="clue-row__pattern">{w.cells.map((i) => g[i] || '·').join('')}</span>
+                      <span className="clue-row__pattern">{w.cells.map((i) => (g[i].length > 1 ? `[${g[i]}]` : g[i] || '·')).join('')}</span>
                       <span className="clue-row__len">({w.cells.length})</span>
                     </button>
-                    <input
-                      type="text"
-                      className="input input--serif"
+                    <ClueInput
                       value={p.clues[w.key] || ''}
                       placeholder="Write a clue"
-                      aria-label={`Clue for ${w.num} ${dirWord}`}
+                      label={`Clue for ${w.num} ${dirWord}`}
                       onFocus={() => selectWord(w)}
-                      onChange={(e) => update({ clues: { ...p.clues, [w.key]: e.target.value } })}
+                      onChange={(v) => update({ clues: { ...p.clues, [w.key]: v } })}
                     />
                   </div>
                 );
@@ -569,6 +602,17 @@ function EditorView({ puzzle: p, setPuzzle }: { puzzle: Puzzle; setPuzzle: (p: P
         }}
       />
       {confirmDialog}
+      <RebusDialog
+        at={rebusAt === null ? null : { row: Math.floor(rebusAt / C) + 1, col: (rebusAt % C) + 1, value: g[rebusAt] === '#' ? '' : g[rebusAt] }}
+        onClose={() => setRebusAt(null)}
+        onSave={(v) => {
+          if (rebusAt === null) return;
+          const next = g.slice();
+          next[rebusAt] = v;
+          editGrid(next, [rebusAt]);
+          setRebusAt(null);
+        }}
+      />
     </>
   );
 }

@@ -12,7 +12,7 @@ body {
 }
 a { color: var(--link); }
 a:hover { text-decoration-thickness: 2px; }
-:where(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid transparent; box-shadow: var(--focus-ring); }
+:where(a, button, input, select, textarea, [tabindex], [contenteditable]):focus-visible { outline: 2px solid transparent; box-shadow: var(--focus-ring); }
 h1, h2, h3, p { margin: 0; }
 .serif { font-family: var(--font-serif); }
 .muted { color: var(--ink-muted); }
@@ -152,7 +152,7 @@ h1, h2, h3, p { margin: 0; }
 .check-row__label--fail { color: var(--check); }
 .check-row__detail { font-size: 13px; line-height: 18px; color: var(--ink-muted); }
 .small-btn.ac-btn { height: auto; min-height: 32px; padding: 0 10px; font-size: 12px; line-height: 16px; flex: none; }
-.clue-rows { max-height: 520px; overflow-y: auto; }
+.clue-rows { position: relative; max-height: 520px; overflow-y: auto; }
 .clue-row { padding: 10px var(--space-4); border-bottom: var(--stroke-hair) solid var(--rule); display: flex; flex-direction: column; gap: 6px; }
 .clue-row[data-active='true'] { background: var(--word); }
 .clue-row__head {
@@ -300,3 +300,12 @@ h1, h2, h3, p { margin: 0; }
 .checks-toggle { flex: none; }
 .panel__head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
 .panel--collapsed .panel__head { border-bottom: 0; }
+.clue-input { cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+.clue-input:empty::before { content: attr(data-placeholder); color: var(--ink-muted); pointer-events: none; }
+.clue-input em, .clue-input i { font-style: italic; }
+.clue-input strong, .clue-input b { font-weight: 700; }
+.clue-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-bottom: var(--stroke-hair) solid var(--rule); }
+.clue-tools .ac-btn { min-height: 32px; padding: 0 var(--space-3); }
+.clue-tools .help { margin-left: auto; }
+.fmt-italic { font-style: italic; }
+.fmt-bold { font-weight: 700; }

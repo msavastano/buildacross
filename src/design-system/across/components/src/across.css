@@ -38,6 +38,8 @@
   position: absolute; top: 2px; left: 3px;
   font-size: calc(var(--ac-cell) * 0.25); line-height: 1; font-weight: 500;
 }
+/* Rebus: several letters in one square, shrunk to fit. */
+.ac-cell--rebus .ac-cell__letter { font-size: calc(var(--ac-cell) * 1.4 / (var(--ac-rebus-len) + 1)); bottom: 12%; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; padding: 0 1px; }
 .ac-cell--pencil .ac-cell__letter { color: var(--pencil); font-weight: 400; }
 .ac-cell--wrong .ac-cell__letter { color: var(--check); }
 .ac-cell__slash {
