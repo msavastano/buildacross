@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
+import { SavingFacts } from '../components/SavingExplainer';
+import { useConfirm } from '../components/useConfirm';
 import { Button } from '../design-system/across/components/src';
 import { newId, puzzleTypeName, type Puzzle } from '../lib/puzzle';
 import { deletePuzzle, listPuzzles, savePuzzle } from '../lib/storage';
@@ -18,9 +20,15 @@ export function SavedPuzzles() {
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { dialog, confirm } = useConfirm();
 
-  function remove(p: Puzzle) {
-    if (!window.confirm(`Delete “${p.title}”? This cannot be undone.`)) return;
+  async function remove(p: Puzzle) {
+    const ok = await confirm({
+      title: 'Delete this puzzle?',
+      body: `“${p.title}” will be removed from this browser. This cannot be undone unless you have a backup.`,
+      confirmLabel: 'Delete puzzle',
+    });
+    if (!ok) return;
     deletePuzzle(p.id);
     setItems(listPuzzles());
   }
@@ -46,8 +54,11 @@ export function SavedPuzzles() {
       <main className="setup">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           <h1 className="ac-text-display">Your puzzles</h1>
-          <p className="muted">Saved in this browser. Download a backup from Export puzzle to keep a copy elsewhere.</p>
         </div>
+        <section className="saving" aria-labelledby="saving-title">
+          <h2 id="saving-title" className="label">Saved in this browser only</h2>
+          <SavingFacts />
+        </section>
         {items.length === 0 ? (
           <p>No puzzles yet.</p>
         ) : (
@@ -69,6 +80,7 @@ export function SavedPuzzles() {
           <Button className="big" onClick={() => fileRef.current?.click()}>Import a backup</Button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importFile} />
         </div>
+        {dialog}
       </main>
     </>
   );

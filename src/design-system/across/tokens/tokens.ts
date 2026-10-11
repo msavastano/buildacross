@@ -20,6 +20,7 @@ export const color = {
     "reveal": "#1c5aa6",
     "pencil": "#625f58",
     "on-ink": "#f6f3ea",
+    "scrim": "#17171799",
     "link": "#1c5aa6"
   },
   "dark": {
@@ -37,6 +38,7 @@ export const color = {
     "reveal": "#8bbcf0",
     "pencil": "#b3afa4",
     "on-ink": "#171717",
+    "scrim": "#000000b3",
     "link": "#8bbcf0"
   }
 } as const;

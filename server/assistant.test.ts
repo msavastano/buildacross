@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildContext } from '../src/lib/assistantContext';
 import { analyze } from '../src/lib/grid';
 import { handleAssistant, MODEL, type MessagesClient } from './assistant';
-import { askMessages } from './prompts';
+import { askMessages } from '../src/lib/assistantPrompts';
+import { describeError } from '../src/lib/claude';
 
 const g = ['C', 'A', 'T', '', '', '', '', '', ''];
 const m = analyze(g, 3, 3);
@@ -76,5 +77,16 @@ describe('askMessages', () => {
     expect(msgs[1].content).toBe('A\n\nB');
     expect(msgs[2].content).toContain('<puzzle>');
     expect(msgs[2].content.endsWith('What next?')).toBe(true);
+  });
+});
+
+describe('describeError', () => {
+  it('words key problems for whose key it was', () => {
+    const auth = new Anthropic.AuthenticationError(401, {}, 'bad key', new Headers());
+    expect(describeError(auth, 'server').message).toBe('The server’s Claude API key was rejected.');
+    expect(describeError(auth, 'own').message).toContain('rejected your API key');
+    const low = new Anthropic.BadRequestError(400, { type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low.' } }, undefined, new Headers());
+    expect(describeError(low, 'own').message).toBe('The Claude API returned an error. Your credit balance is too low.');
+    expect(describeError(low, 'server').message).toBe('The Claude API returned an error.');
   });
 });

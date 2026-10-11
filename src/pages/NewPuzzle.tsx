@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
 import { PuzzleForm, type PuzzleFormValues } from '../components/PuzzleForm';
+import { SavingExplainerButton } from '../components/SavingExplainer';
 import { newId, startingGrid, type Puzzle } from '../lib/puzzle';
 import { savePuzzle } from '../lib/storage';
 
@@ -36,7 +37,10 @@ export function NewPuzzle() {
       <main className="setup">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           <h1 className="ac-text-display">New puzzle</h1>
-          <p className="muted">Set the size and rules. You can change the title and clues later.</p>
+          <p className="muted">
+            Set the size and rules. You can change the title and clues later. Your puzzle is saved in this
+            browser only. <SavingExplainerButton className="text-btn--inline" />
+          </p>
         </div>
         <PuzzleForm initial={initial} submitLabel="Create puzzle" onSubmit={create} />
       </main>
