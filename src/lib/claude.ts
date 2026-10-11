@@ -7,7 +7,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { AssistantRequest, AssistantResponse, CluesResult } from './assistantContext';
 import { askMessages, cluesPrompt, SYSTEM } from './assistantPrompts';
 
-export const MODEL = 'claude-opus-5-5';
+export const MODEL = 'claude-haiku-5-5';
 
 const CLUES_SCHEMA = {
   type: 'object',
