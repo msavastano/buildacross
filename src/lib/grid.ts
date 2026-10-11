@@ -2,7 +2,8 @@
  * Pure grid logic, ported from the Builder prototype (docs/handoff/design/Builder.dc.html).
  *
  * A grid is a flat array of R × C squares in row-major order: '#' is a black square,
- * '' is an empty white square, and an uppercase letter is a filled square.
+ * '' is an empty white square, and an uppercase letter is a filled square. A square can also
+ * hold a rebus: several characters (A–Z, 0–9) that solvers enter in one square.
  */
 export type Dir = 'A' | 'D';
 
@@ -128,7 +129,7 @@ export function analyze(g: string[], R: number, C: number): Analysis {
   };
 }
 
-/** The word's letters, with '?' for empty squares. */
+/** The word's letters, with '?' for empty squares. A rebus square adds all its letters. */
 export function wordText(g: string[], w: Word): string {
   return w.cells.map((i) => g[i] || '?').join('');
 }

@@ -3,6 +3,7 @@
  * clue drafts and questions go to the server route (src/lib/assistantApi.ts).
  */
 import type { CluesResult } from './assistantContext';
+import { clueToPlain } from './clueFormat';
 import { allWords, wordChip, wordLabel, wordText, type Analysis, type Word } from './grid';
 import type { Check, CheckId } from './validate';
 import type { FillSuggestions } from './wordlist';
@@ -54,7 +55,7 @@ export function reviewClueStyle(g: string[], m: Analysis, clues: Record<string, 
   let empty = 0;
   let written = 0;
   for (const w of allWords(m)) {
-    const clue = (clues[w.key] || '').trim();
+    const clue = clueToPlain(clues[w.key] || '').trim();
     const t = wordText(g, w);
     const label = wordLabel(w);
     if (!clue) {
@@ -84,6 +85,9 @@ const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en
 
 export function fillMessage(w: Word, s: FillSuggestions): AssistantMessage {
   const label = wordLabel(w);
+  if (s.rebus) {
+    return { role: 'ai', text: `${label} has a rebus square. Fill suggestions only cover entries with one letter per square.` };
+  }
   if (s.full) {
     return { role: 'ai', text: `${label} is full: ${s.pattern}. Clear the letters you want to change, then ask again.` };
   }

@@ -30,14 +30,14 @@ There are no accounts yet, so anyone who can open the site can spend API credit 
 
 - **Landing** (`/`): animated hero grid (pause button, static under reduced motion), how it works, a 7 × 7 practice grid scored by the same rules as the editor.
 - **New puzzle** (`/new`): title, constructor, size (5 × 5, 15 × 15, 21 × 21, custom 3–25), NYT rules with puzzle type, sample or blank start.
-- **Editor** (`/puzzle/:id`): Letters and Black squares modes, mirroring, keyboard entry, clue bar, Across and Down clue lists keyed by start square, live checks with "Show" marks (the panel minimizes while nothing fails), an assistant panel, export to `.puz`, a print view and a JSON backup.
+- **Editor** (`/puzzle/:id`): Letters and Black squares modes, mirroring, keyboard entry, rebus squares (Rebus button, Insert or Esc), italic and bold in clues (Ctrl/Cmd + I or B), clue bar, Across and Down clue lists keyed by start square, live checks with "Show" marks (the panel minimizes while nothing fails), an assistant panel, export to `.puz`, a print view and a JSON backup.
 - **Assistant** (editor side panel): *Suggest fill* matches the selected entry against a scored word list in the browser and keeps only words that leave every crossing an answer; a placed word goes in as pencil until you type over it or ink it in. *Draft clues* asks Claude for an easy and a tricky clue, each with a Use button. *Explain checks* and *Review clue style* run locally. The text box asks Claude anything about the puzzle; it sees the grid, every entry and clue, the selected entry with its crossings and the failing checks.
 - **Your puzzles** (`/puzzles`): everything saved in this browser, with delete and import from a backup, and a plain explanation that puzzles live only in this browser. The editor and setup screens link to the same explanation (How saving works).
 - Newsprint and Night edition themes; the choice is remembered per browser.
 
 ## Not built yet
 
-Accounts and cloud saving, undo and redo, rebus and circled squares, and an on-screen keyboard for phones.
+Accounts and cloud saving, undo and redo, circled squares, and an on-screen keyboard for phones.
 
 ## Layout
 

@@ -2,6 +2,7 @@
  * Across Lite (.puz) export, version 1.3.
  * Format reference: https://code.google.com/archive/p/puz/wikis/FileFormat.wiki
  */
+import { clueToPlain } from './clueFormat';
 import { analyze } from './grid';
 import type { Puzzle } from './puzzle';
 
@@ -37,17 +38,45 @@ export function cksum(data: number[], start = 0): number {
 export function puzClueOrder(p: Pick<Puzzle, 'grid' | 'rows' | 'cols' | 'clues'>): string[] {
   const m = analyze(p.grid, p.rows, p.cols);
   const words = [...m.across, ...m.down].sort((a, b) => a.num - b.num || (a.dir === 'A' ? -1 : 1));
-  return words.map((w) => p.clues[w.key] ?? '');
+  return words.map((w) => clueToPlain(p.clues[w.key] ?? ''));
 }
 
 export function canExportPuz(p: Pick<Puzzle, 'grid' | 'rows' | 'cols'>): { ok: boolean; reason?: string } {
   if (p.rows > 255 || p.cols > 255) return { ok: false, reason: 'The grid is too large for a .puz file.' };
   if (p.grid.some((v) => v === '')) return { ok: false, reason: 'Fill every square before exporting a .puz file.' };
+  if (new Set(p.grid.filter((v) => v.length > 1)).size > 99) return { ok: false, reason: 'A .puz file holds at most 99 different rebus answers.' };
   return { ok: true };
 }
 
+/** An extra section (GRBS, RTBL): name, length, checksum, data, then a null byte. */
+function section(name: string, data: number[]): number[] {
+  const head = new Uint8Array(8);
+  const dv = new DataView(head.buffer);
+  head.set(bytes(name), 0);
+  dv.setUint16(4, data.length, true);
+  dv.setUint16(6, cksum(data), true);
+  return [...head, ...data, 0];
+}
+
+/**
+ * Rebus squares: the solution grid holds each rebus's first letter, GRBS marks which squares are
+ * a rebus (table index + 1) and RTBL lists the full answers as " 0:STAR; 1:HEART;".
+ */
+function rebusSections(grid: string[]): number[] {
+  const table: string[] = [];
+  const marks = grid.map((v) => {
+    if (v === '#' || v.length < 2) return 0;
+    let k = table.indexOf(v.toUpperCase());
+    if (k < 0) { k = table.length; table.push(v.toUpperCase()); }
+    return k + 1;
+  });
+  if (!table.length) return [];
+  const rtbl = table.map((t, k) => `${String(k).padStart(2, ' ')}:${t};`).join('');
+  return [...section('GRBS', marks), ...section('RTBL', bytes(rtbl))];
+}
+
 export function exportPuz(p: Puzzle, copyright = ''): Uint8Array {
-  const solution = bytes(p.grid.map((v) => (v === '#' ? '.' : v.toUpperCase())).join(''));
+  const solution = bytes(p.grid.map((v) => (v === '#' ? '.' : v.charAt(0).toUpperCase())).join(''));
   const state = bytes(p.grid.map((v) => (v === '#' ? '.' : '-')).join(''));
   const title = toLatin1(p.title.trim());
   const author = toLatin1(p.author.trim());
@@ -99,6 +128,7 @@ export function exportPuz(p: Puzzle, copyright = ''): Uint8Array {
     ...bytes(copy + '\0'),
     ...clues.flatMap((c) => bytes(c + '\0')),
     ...bytes(notes + '\0'),
+    ...rebusSections(p.grid),
   ];
   const out = new Uint8Array(header.length + body.length);
   out.set(header, 0);

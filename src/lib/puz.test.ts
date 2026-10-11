@@ -49,4 +49,17 @@ describe('helpers', () => {
     expect(toLatin1('Diva’s “aria” — 5 × 5…')).toBe('Diva\'s "aria" - 5 x 5...');
     expect(toLatin1('café')).toBe('café');
   });
+
+  it('writes rebus squares as GRBS and RTBL sections and strips clue formatting', () => {
+    const b = exportPuz({ ...p, grid: ['CAT', 'A', 'T', 'A', '#', 'E', 'B', 'E', 'CAT'], clues: { '0-0-A': '<i>Hamlet</i> Q&amp;A' } });
+    const text = String.fromCharCode(...b);
+    expect(String.fromCharCode(...b.slice(0x34, 0x34 + 9))).toBe('CATA.EBEC');
+    expect(text).toContain('Hamlet Q&A\0');
+    const g = text.indexOf('GRBS');
+    expect(u16(b, g + 4)).toBe(9);
+    expect(Array.from(b.slice(g + 8, g + 17))).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 1]);
+    expect(u16(b, g + 6)).toBe(cksum(Array.from(b.slice(g + 8, g + 17))));
+    const r = text.indexOf('RTBL');
+    expect(text.slice(r + 8, r + 8 + u16(b, r + 4))).toBe(' 0:CAT;');
+  });
 });

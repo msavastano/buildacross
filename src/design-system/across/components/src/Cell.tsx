@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { cx } from './cx';
 
 export type CellState = 'empty' | 'active' | 'word' | 'block';
@@ -22,17 +23,19 @@ export function Cell({
   letter = '', number, state = 'empty', mark, pencil, circled, size = 'md', inGrid, onClick, className,
 }: CellProps) {
   const block = state === 'block';
+  const rebus = !block && letter.length > 1;
   const label = block
     ? `Black square${mark === 'wrong' ? ', flagged' : ''}`
-    : `${number ? `${number}, ` : ''}${letter || 'empty'}${pencil ? ', pencil' : ''}` +
+    : `${number ? `${number}, ` : ''}${letter ? (rebus ? `rebus ${letter}` : letter) : 'empty'}${pencil ? ', pencil' : ''}` +
       `${mark === 'wrong' ? ', incorrect' : ''}${mark === 'revealed' ? ', revealed' : ''}`;
   return (
     <div
       className={cx(
         'ac-cell', `ac-cell--${size}`, `ac-cell--${state}`,
         inGrid && 'ac-cell--in-grid', pencil && 'ac-cell--pencil',
-        mark && `ac-cell--${mark}`, circled && 'ac-cell--circled', className,
+        mark && `ac-cell--${mark}`, circled && 'ac-cell--circled', rebus && 'ac-cell--rebus', className,
       )}
+      style={rebus ? ({ '--ac-rebus-len': Math.min(letter.length, 8) } as CSSProperties) : undefined}
       role="gridcell"
       aria-label={label}
       aria-selected={state === 'active' ? true : undefined}

@@ -45,4 +45,9 @@ describe('suggestFill', () => {
     const g = ['C', 'A', 'T', '', '', '', '', '', ''];
     expect(suggestFill(LIST, g, analyze(g, 3, 3), oneA).full).toBe(true);
   });
+
+  it('skips entries with a rebus square', () => {
+    const g = ['CAT', '', '', '', '', '', '', '', ''];
+    expect(suggestFill(LIST, g, analyze(g, 3, 3), oneA)).toMatchObject({ rebus: true, viable: [] });
+  });
 });

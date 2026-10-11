@@ -8,7 +8,7 @@ export type ConstructMode = 'letters' | 'blocks';
 export interface ConstructGridProps {
   rows: number;
   cols: number;
-  /** flat, row-major: '#' black square, '' empty, 'A'–'Z' letter */
+  /** flat, row-major: '#' black square, '' empty, 'A'–'Z' letter, or a multi-letter rebus */
   grid: string[];
   /** flat index of the cursor square */
   cursor: number;
@@ -25,6 +25,8 @@ export interface ConstructGridProps {
   /** `changed` lists the squares written by this edit, even when a letter was retyped as itself */
   onChange: (grid: string[], changed: number[]) => void;
   onCursorChange: (cursor: number, direction: Direction) => void;
+  /** Insert or Escape on a white square in Letters mode: the parent asks for a rebus */
+  onRebus?: (cursor: number) => void;
   className?: string;
 }
 
@@ -47,7 +49,7 @@ function toSolution(grid: string[], rows: number, cols: number): string[] {
  */
 export function ConstructGrid({
   rows, cols, grid, cursor, direction, mode, mirror, marks = [], pencil = [], size = 'md',
-  label = 'Puzzle grid', onChange, onCursorChange, className,
+  label = 'Puzzle grid', onChange, onCursorChange, onRebus, className,
 }: ConstructGridProps) {
   const shape = toSolution(grid, rows, cols).join('|');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +112,7 @@ export function ConstructGrid({
     }
     if (k === '.' || (k === 'Enter' && mode === 'blocks')) { e.preventDefault(); toggle(cursor); return; }
     if (mode !== 'letters') return;
+    if ((k === 'Insert' || k === 'Escape') && onRebus && !onBlock) { e.preventDefault(); onRebus(cursor); return; }
     if (/^[a-zA-Z]$/.test(k)) {
       e.preventDefault();
       if (onBlock) return;

@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { cx } from './cx';
 import type { Direction } from './numberGrid';
 
-export interface Clue { number: number; text: string; done?: boolean }
+/** `text` may carry inline formatting (italic titles, bold) as React nodes. */
+export interface Clue { number: number; text: ReactNode; done?: boolean }
 
 export interface ClueListProps {
   direction?: Direction;

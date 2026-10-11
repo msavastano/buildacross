@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button, Cell, ClueList } from '../design-system/across/components/src';
+import { ClueText } from '../components/ClueText';
+import { clueToPlain } from '../lib/clueFormat';
 import { analyze } from '../lib/grid';
 import { loadPuzzle } from '../lib/storage';
 import { NotFound } from './NotFound';
@@ -14,7 +16,10 @@ export function PrintView() {
 
   const m = analyze(p.grid, p.rows, p.cols);
   const size = Math.max(p.rows, p.cols) <= 7 ? 'lg' : Math.max(p.rows, p.cols) <= 15 ? 'md' : 'sm';
-  const clues = (list: typeof m.across) => list.map((w) => ({ number: w.num, text: p.clues[w.key]?.trim() || '—' }));
+  const clues = (list: typeof m.across) => list.map((w) => {
+    const c = p.clues[w.key]?.trim();
+    return { number: w.num, text: c && clueToPlain(c).trim() ? <ClueText clue={c} /> : '—' };
+  });
 
   return (
     <div className="print-page" data-theme="light">

@@ -9,7 +9,7 @@ export interface Puzzle {
   rows: number;
   cols: number;
   sizeId: SizeId;
-  /** flat grid: '#' black, '' empty, 'A'–'Z' filled */
+  /** flat grid: '#' black, '' empty, 'A'–'Z' filled, or a rebus such as 'STAR' */
   grid: string[];
   /** keyed by Word.key ("r-c-A") so clues survive renumbering */
   clues: Record<string, string>;
