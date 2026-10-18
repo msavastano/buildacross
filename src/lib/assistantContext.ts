@@ -2,9 +2,9 @@
  * What the browser sends to the assistant route, and the checks the server runs on it.
  * Shared by the editor (src/pages/Editor.tsx) and the server (server/assistant.ts).
  */
-import { clueToPlain } from './clueFormat';
-import { allWords, wordChip, wordLabel, wordText, type Analysis, type Word } from './grid';
-import type { Check } from './validate';
+import { clueToPlain } from './clueFormat.js';
+import { allWords, wordChip, wordLabel, wordText, type Analysis, type Word } from './grid.js';
+import type { Check } from './validate.js';
 
 export interface EntryContext {
   /** "14A" */

@@ -4,8 +4,8 @@
  * loaded lazily so the SDK stays out of the main bundle).
  */
 import Anthropic from '@anthropic-ai/sdk';
-import type { AssistantRequest, AssistantResponse, CluesResult } from './assistantContext';
-import { askMessages, cluesPrompt, SYSTEM } from './assistantPrompts';
+import type { AssistantRequest, AssistantResponse, CluesResult } from './assistantContext.js';
+import { askMessages, cluesPrompt, SYSTEM } from './assistantPrompts.js';
 
 export const MODEL = 'claude-haiku-5-5';
 

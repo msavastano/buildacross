@@ -2,7 +2,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { defineConfig, loadEnv, type Plugin, type PreviewServer, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
-import { handleAssistant } from './server/assistant';
+import { handleAssistant } from './server/assistant.js';
 
 /** Serves /api/assistant from `npm run dev` and `npm run preview`, the way Vercel does in production. */
 function assistantApi(): Plugin {
