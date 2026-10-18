@@ -1,5 +1,5 @@
 /** Prompt text for the assistant, shared by the server route and the browser's own-key path (src/lib/claude.ts). */
-import type { EntryContext, HistoryItem, PuzzleContext } from './assistantContext';
+import type { EntryContext, HistoryItem, PuzzleContext } from './assistantContext.js';
 
 export const SYSTEM = `You are the assistant inside Across, a web app for building crossword puzzles. The person you help is the constructor: they design the grid, choose the fill and write the clues. You suggest; they decide.
 

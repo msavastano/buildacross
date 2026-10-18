@@ -1,6 +1,6 @@
-import { clueToPlain } from './clueFormat';
-import { allWords, wordText, type Analysis } from './grid';
-import { NYT_RULES, isNytSize, maxWordsFor, type PuzzleType } from './rules';
+import { clueToPlain } from './clueFormat.js';
+import { allWords, wordText, type Analysis } from './grid.js';
+import { NYT_RULES, isNytSize, maxWordsFor, type PuzzleType } from './rules.js';
 
 export type CheckStatus = 'pass' | 'fail' | 'warn' | 'todo';
 export type CheckId = 'size' | 'sym' | 'interlock' | 'checked' | 'short' | 'count' | 'blocks' | 'dupes' | 'filled' | 'clued';

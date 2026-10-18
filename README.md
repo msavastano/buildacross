@@ -22,7 +22,7 @@ Without a server key, anyone using the app can add their own Claude API key from
 
 ## Deploy (Vercel)
 
-Import the repository in Vercel; `vercel.json` sets the Vite build, the `api/assistant.ts` function and the rewrite that sends every page path to `index.html`. Add `ANTHROPIC_API_KEY` under Project settings, Environment variables. The key only lives on the server; the browser talks to `/api/assistant`.
+Import the repository in Vercel; `vercel.json` sets the Vite build, the `api/assistant.ts` function and the rewrite that sends every page path to `index.html`. Add `ANTHROPIC_API_KEY` under Project settings, Environment variables. The key only lives on the server; the browser talks to `/api/assistant`. To try the Vercel build locally: `npx vercel build`, then the function is in `.vercel/output/functions/api/assistant.func`.
 
 There are no accounts yet, so anyone who can open the site can spend API credit through the assistant when the server has a key. Keep the deployment private (Vercel deployment protection) or leave the server key unset so each person uses their own.
 

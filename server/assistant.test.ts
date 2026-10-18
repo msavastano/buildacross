@@ -1,11 +1,11 @@
 // @vitest-environment node
 import Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
-import { buildContext } from '../src/lib/assistantContext';
-import { analyze } from '../src/lib/grid';
-import { handleAssistant, MODEL, type MessagesClient } from './assistant';
-import { askMessages } from '../src/lib/assistantPrompts';
-import { describeError } from '../src/lib/claude';
+import { buildContext } from '../src/lib/assistantContext.js';
+import { analyze } from '../src/lib/grid.js';
+import { handleAssistant, MODEL, type MessagesClient } from './assistant.js';
+import { askMessages } from '../src/lib/assistantPrompts.js';
+import { describeError } from '../src/lib/claude.js';
 
 const g = ['C', 'A', 'T', '', '', '', '', '', ''];
 const m = analyze(g, 3, 3);

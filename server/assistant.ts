@@ -5,8 +5,8 @@
  * Used by api/assistant.ts (Vercel) and by the dev server middleware in vite.config.ts.
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { parseAssistantRequest, type AssistantResponse } from '../src/lib/assistantContext';
-import { describeError, MODEL, runAssistant, type MessagesClient } from '../src/lib/claude';
+import { parseAssistantRequest, type AssistantResponse } from '../src/lib/assistantContext.js';
+import { describeError, MODEL, runAssistant, type MessagesClient } from '../src/lib/claude.js';
 
 export { MODEL, type MessagesClient };
 
